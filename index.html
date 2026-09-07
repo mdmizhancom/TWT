@@ -2,9 +2,9 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>Tiles Works Tracer - টাইলস কাজ ও মজুরি ট্র্যাকার</title>
-  <meta name="description" content="দৈনিক হাজিরা, কারিগর মজুরি, অগ্রিম টাকা এবং সাইটের খরচ হিসাব রাখার আধুনিক অনলাইন ট্র্যাকার।">
+  <meta name="description" content="দৈনিক হাজিরা, কারিগর মজুরি, জমা টাকা এবং সাইটের খরচ হিসাব রাখার আধুনিক অনলাইন ট্র্যাকার।">
 
   <!-- Google Fonts: Plus Jakarta Sans & Hind Siliguri -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,6 +89,18 @@
           <button id="mobile-menu-toggle" class="mobile-menu-btn" title="মেনু খুলুন">
             <i class="fa-solid fa-bars"></i>
           </button>
+          
+          <!-- Mobile Brand Logo & Header Info -->
+          <div class="mobile-brand-box">
+            <div class="mobile-logo-icon">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div class="mobile-brand-info">
+              <span class="mobile-brand-name">টাইলস ট্র্যাকার</span>
+              <span id="mobile-header-date" class="mobile-brand-date"><i class="fa-regular fa-calendar"></i> তারিখ</span>
+            </div>
+          </div>
+
           <div class="page-title">
             <h2 id="current-page-title">ড্যাশবোর্ড ও সংক্ষিপ্ত হিসাব</h2>
             <p id="current-page-desc">দৈনিক কার্যক্রম, মোট মজুরি ও খরচের একনজর হিসাব</p>
@@ -149,9 +161,9 @@
                 <i class="fa-solid fa-money-bill-transfer"></i>
               </div>
               <div class="stat-info">
-                <h3>মোট অগ্রিম নেওয়া</h3>
+                <h3>মোট জমা দেওয়া</h3>
                 <div id="stat-total-advance" class="stat-value">৳০</div>
-                <div class="stat-sub">কাজের পূর্বে গৃহীত টাকা</div>
+                <div class="stat-sub">শ্রমিকদের দেওয়া মোট জমা</div>
               </div>
             </div>
 
@@ -162,7 +174,7 @@
               <div class="stat-info">
                 <h3>অবশিষ্ট বকেয়া মজুরি</h3>
                 <div id="stat-wage-balance" class="stat-value">৳০</div>
-                <div class="stat-sub">মোট মজুরি - অগ্রিম টাকা</div>
+                <div class="stat-sub">মোট মজুরি - জমা টাকা</div>
               </div>
             </div>
 
@@ -299,9 +311,19 @@
                 <span>দৈনিক হাজিরা ও মজুরি খাতা</span>
                 <span id="worklogs-count" class="badge-pill viewer" style="margin-left: 0.5rem;">0 টি রেকর্ড</span>
               </div>
-              <button id="btn-add-log-tab" class="btn btn-primary btn-sm admin-only">
-                <i class="fa-solid fa-plus"></i> নতুন হাজিরা এন্ট্রি
-              </button>
+              <div class="logs-header-tools">
+                <div class="view-mode-toggle-group">
+                  <button id="btn-view-card" class="btn-view-mode active" title="কার্ড ভিউতে দেখুন">
+                    <i class="fa-solid fa-table-cells-large"></i> <span>কার্ড ভিউ</span>
+                  </button>
+                  <button id="btn-view-table" class="btn-view-mode" title="টেবিল ভিউতে দেখুন">
+                    <i class="fa-solid fa-table-list"></i> <span>টেবিল ভিউ</span>
+                  </button>
+                </div>
+                <button id="btn-add-log-tab" class="btn btn-primary btn-sm admin-only">
+                  <i class="fa-solid fa-plus"></i> নতুন হাজিরা এন্ট্রি
+                </button>
+              </div>
             </div>
             <div class="card-body" style="padding: 0;">
               <div id="worklogs-container"></div>
@@ -333,7 +355,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <div>
               <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">কারিগর ও শ্রমিক ডিরেক্টরি</h3>
-              <p style="font-size: 0.85rem; color: var(--text-muted);">মেস্তুরি, হেল্পার ও তাদের মোট আয়, অগ্রিম ও বকেয়া খতিয়ান</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">মেস্তুরি, হেল্পার ও তাদের মোট আয়, জমা ও বকেয়া খতিয়ান</p>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <span id="workers-count" class="badge-pill viewer">0 জন কর্মী</span>
@@ -424,7 +446,7 @@
 
   <!-- Modal 1: Work Log Entry (Multi-Worker Attendance Supported) -->
   <div id="modal-work-log" class="modal-overlay">
-    <div class="modal-box" style="max-width: 620px;">
+    <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
         <h3 id="modal-log-title">দৈনিক হাজিরা / মজুরি / কাজের এন্ট্রি</h3>
         <button class="close-btn close-modal-btn">&times;</button>
@@ -432,39 +454,30 @@
       <form id="form-work-log">
         <input type="hidden" id="log-id">
         <div class="modal-body">
-          <!-- Shared Date and Building for the Entry -->
-          <div class="form-grid" style="margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1.5px solid var(--border);">
-            <div class="form-group">
-              <label for="log-date">তারিখ (Date)</label>
-              <input type="date" id="log-date" class="form-control default-today">
+          <!-- Date and Modal Quick Links -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1.5px solid var(--border); flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 180px; margin-bottom: 0;">
+              <label for="log-date"><i class="fa-solid fa-calendar-day"></i> তারিখ (Date)</label>
+              <input type="date" id="log-date" class="form-control default-today" required>
             </div>
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label for="log-site-select" style="margin-bottom: 0;">ডিফল্ট বিল্ডিং (ঐচ্ছিক)</label>
-                <a href="javascript:void(0)" id="link-quick-add-site" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন বিল্ডিং</a>
-              </div>
-              <select id="log-site-select" class="form-select select-site-options">
-                <option value="" selected>🏢 সাধারণ সাইট বা ডিফল্ট বিল্ডিং...</option>
-              </select>
+            <div class="admin-only" style="display: flex; gap: 0.75rem; align-items: center; padding-bottom: 0.35rem;">
+              <a href="javascript:void(0)" id="link-quick-add-site" style="font-size: 0.775rem; color: var(--primary); font-weight: 700; text-decoration: none;"><i class="fa-solid fa-city"></i> + নতুন বিল্ডিং</a>
+              <a href="javascript:void(0)" id="link-quick-add-worker" style="font-size: 0.775rem; color: var(--primary); font-weight: 700; text-decoration: none;"><i class="fa-solid fa-user-plus"></i> + নতুন কারিগর</a>
             </div>
           </div>
 
           <!-- Multiple Worker Rows Section Header -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> কারিগর ও কাজের তথ্য
+              <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> কারিগর, সাইট ও কাজের তথ্য
             </h4>
-            <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <a href="javascript:void(0)" id="link-quick-add-worker" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন কারিগর</a>
-              <button type="button" id="btn-add-worker-row" class="btn btn-secondary btn-sm" style="font-size: 0.775rem;">
-                <i class="fa-solid fa-plus"></i> আরও শ্রমিক যোগ
-              </button>
-            </div>
+            <button type="button" id="btn-add-worker-row" class="btn btn-secondary btn-sm" style="font-size: 0.775rem;">
+              <i class="fa-solid fa-plus"></i> আরও শ্রমিক যোগ
+            </button>
           </div>
 
           <!-- Dynamic Container for 1 or more Worker Rows -->
           <div id="worker-rows-container"></div>
-
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>
@@ -593,7 +606,7 @@
             <div id="prof-earned" style="font-size: 1.1rem; font-weight: 800; color: var(--success);">৳০</div>
           </div>
           <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">মোট অগ্রিম</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">মোট জমা</div>
             <div id="prof-advance" style="font-size: 1.1rem; font-weight: 800; color: var(--warning);">৳০</div>
           </div>
           <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
@@ -610,14 +623,15 @@
         <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
           <i class="fa-solid fa-clock-rotate-left"></i> কাজের খতিয়ান ও ইতিহাস
         </h4>
-        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-          <table class="custom-table">
+        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+          <table class="custom-table table-worklogs">
             <thead>
               <tr>
                 <th>তারিখ</th>
-                <th>বিল্ডিং</th>
+                <th>বিল্ডিং / অবস্থা</th>
                 <th>মজুরি</th>
-                <th>অগ্রিম</th>
+                <th>জমা</th>
+                <th>মোট বকেয়া</th>
                 <th>কাজের বিবরণ / SqFt</th>
               </tr>
             </thead>

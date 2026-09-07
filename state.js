@@ -6,7 +6,26 @@ const AppState = {
   isAdmin: localStorage.getItem("twt_admin") === "true",
   adminPass: localStorage.getItem("twt_pass") || DEFAULT_PASS,
   activeTab: "dashboard",
+  viewMode: localStorage.getItem("twt_view_mode") || "card",
+  expandedDate: null,
   filters: { siteId: "all", workerId: "all", role: "all", startDate: "", endDate: "", q: "" },
+
+  setViewMode(mode) {
+    this.viewMode = mode === "table" ? "table" : "card";
+    localStorage.setItem("twt_view_mode", this.viewMode);
+    document.getElementById("btn-view-card")?.classList.toggle("active", this.viewMode === "card");
+    document.getElementById("btn-view-table")?.classList.toggle("active", this.viewMode === "table");
+    if (window.Render) window.Render.logs();
+  },
+
+  toggleDate(date) {
+    if (this.expandedDate === date) {
+      this.expandedDate = null;
+    } else {
+      this.expandedDate = date;
+    }
+    if (window.Render) window.Render.logs();
+  },
 
   setAdmin(status) {
     this.isAdmin = !!status;
@@ -62,6 +81,24 @@ const AppState = {
       }
       return true;
     }).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  },
+
+  getRunningBalances() {
+    const sorted = [...this.logs].sort((a, b) => {
+      const dComp = (a.date || "").localeCompare(b.date || "");
+      if (dComp !== 0) return dComp;
+      return (a.created_at || "").localeCompare(b.created_at || "");
+    });
+    const running = {};
+    const map = new Map();
+    sorted.forEach(l => {
+      const wKey = l.worker_id || l.worker_name || "worker";
+      if (running[wKey] === undefined) running[wKey] = 0;
+      const net = (+l.wage_amount || 0) - (+l.advance_paid || 0);
+      running[wKey] += net;
+      map.set(l.id, running[wKey]);
+    });
+    return map;
   },
 
   money(n) { return "৳" + Number(n || 0).toLocaleString("en-IN"); }

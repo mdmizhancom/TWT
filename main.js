@@ -3,6 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
   document.querySelectorAll('input[type="date"].default-today').forEach(i => i.value = today);
 
+  const formatBnDate = (d = new Date()) => {
+    const monthsBn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+    const numbersBn = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+    const toBn = n => String(n).split("").map(c => numbersBn[c] || c).join("");
+    return `${toBn(d.getDate())} ${monthsBn[d.getMonth()]}, ${toBn(d.getFullYear())}`;
+  };
+  const headerDateEl = document.getElementById("mobile-header-date");
+  if (headerDateEl) {
+    headerDateEl.innerHTML = `<i class="fa-regular fa-calendar-days"></i> ${formatBnDate(new Date())}`;
+  }
+
   const switchTab = (tab, updateHash = true) => {
     const valid = ["dashboard", "logs", "sites", "workers", "expenses", "reports"], target = valid.includes(tab) ? tab : "dashboard";
     AppState.activeTab = target; localStorage.setItem("twt_tab", target);
@@ -58,31 +69,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const addWorkerRow = (data = {}) => {
     const c = document.getElementById("worker-rows-container");
     if (!c) return;
-    const topSiteVal = document.getElementById("log-site-select")?.value || "";
-    const rowSiteId = data.site_id !== undefined ? data.site_id : topSiteVal;
-    const sOpts = AppState.sites.map(s => `<option value="${s.id}" data-name="${s.name}" ${rowSiteId === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
-    const siteHtml = AppState.sites.length ? `<option value="" ${!rowSiteId ? 'selected' : ''}>🏢 সাধারণ সাইট</option>` + sOpts : '<option value="" selected>সাধারণ সাইট</option>';
+    const rowSiteId = data.site_id !== undefined ? data.site_id : "";
+    const sOpts = AppState.sites.map(s => `<option value="${s.id}" data-name="${s.name}" ${rowSiteId === s.id ? 'selected' : ''}>🏢 ${s.name}</option>`).join('');
+    const siteHtml = `<option value="" ${!rowSiteId ? 'selected' : ''}>🚫 কোনো কাজ নেই (শুধু জমা / পেমেন্ট)</option>` + sOpts;
     const wOpts = AppState.workers.map(w => `<option value="${w.id}" data-name="${w.name}" data-rate="${w.daily_rate}" data-role="${w.role}" ${data.worker_id === w.id ? 'selected' : ''}>${w.name} [${w.role}] - ৳${w.daily_rate || 0}/দিন</option>`).join('');
     const workerHtml = AppState.workers.length ? `<option value="" disabled ${!data.worker_id ? 'selected' : ''}>👤 শ্রমিক নির্বাচন করুন...</option>` + wOpts : '<option value="" disabled selected>⚠️ কোনো কারিগর যুক্ত নেই</option>';
+    
     const div = document.createElement("div");
     div.className = "worker-entry-row";
-    const initRole = data.role || (data.worker_id ? (AppState.workers.find(w => w.id === data.worker_id)?.role || '') : '');
+    const initWorker = data.worker_id ? AppState.workers.find(w => w.id === data.worker_id) : (data.worker_name ? { name: data.worker_name, role: data.role || 'মেস্তুরি' } : null);
+    const initRole = data.role || (initWorker ? initWorker.role : '');
     const badgeCls = initRole === 'কাটার' ? 'tag-cutter' : initRole === 'হেল্পার' ? 'tag-helper' : initRole === 'লেবার' ? 'tag-labor' : 'tag-mistri';
+    
     div.innerHTML = `
       <div class="worker-row-top">
         <div class="worker-row-badge-wrap">
           <span class="worker-row-num"><i class="fa-solid fa-user-check"></i> শ্রমিক #${c.children.length + 1}</span>
-          <span class="row-role-tag tag-badge ${badgeCls}" style="${initRole ? '' : 'display:none;'}">${initRole}</span>
+          <div class="worker-selected-preview" style="${initWorker ? 'display:inline-flex;' : 'display:none;'}">
+            <span class="row-avatar-box">${initWorker ? AppState.getAvatar(initWorker, 'worker-avatar-xs') : ''}</span>
+            <strong class="row-worker-name-display">${initWorker ? initWorker.name : ''}</strong>
+            <span class="row-role-tag tag-badge ${badgeCls}">${initRole || 'মেস্তুরি'}</span>
+          </div>
         </div>
         <button type="button" class="btn-remove-worker-row" title="এই শ্রমিক বাদ দিন"><i class="fa-solid fa-trash-can"></i> বাদ দিন</button>
       </div>
       <div class="worker-inputs-grid">
         <div class="form-group worker-field-site">
-          <label>বিল্ডিং / সাইট</label>
+          <label><i class="fa-solid fa-building"></i> বিল্ডিং / সাইট (কাজ না করলে খালি রাখুন)</label>
           <select class="form-select row-site-select">${siteHtml}</select>
         </div>
         <div class="form-group worker-field-main">
-          <label>শ্রমিক / কারিগর</label>
+          <label><i class="fa-solid fa-user"></i> শ্রমিক / কারিগর নির্বাচন</label>
           <select class="form-select row-worker-select">${workerHtml}</select>
         </div>
         <div class="form-group">
@@ -90,8 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <input type="number" class="form-control row-wage-input" placeholder="যেমন: ১০০০" value="${data.wage_amount !== undefined ? data.wage_amount : ''}" min="0">
         </div>
         <div class="form-group">
-          <label>অগ্রিম গ্রহণ (৳)</label>
-          <input type="number" class="form-control row-advance-input" placeholder="০" value="${data.advance_paid || ''}" min="0">
+          <label>জমা / দেওয়া হয়েছে (৳)</label>
+          <input type="number" class="form-control row-advance-input" placeholder="০" value="${data.advance_paid !== undefined ? data.advance_paid : ''}" min="0">
         </div>
       </div>
       <div class="worker-inputs-subgrid">
@@ -104,15 +121,45 @@ document.addEventListener("DOMContentLoaded", () => {
           <input type="text" class="form-control row-remarks-input" placeholder="যেমন: বাথরুম টাইলস বা মন্তব্য" value="${data.remarks || ''}">
         </div>
       </div>`;
+
     div.querySelector(".row-worker-select").addEventListener("change", e => {
       const opt = e.target.options[e.target.selectedIndex];
       if (opt && opt.value) {
-        div.querySelector(".row-wage-input").value = opt.getAttribute("data-rate") || "";
-        const r = opt.getAttribute("data-role") || "মেস্তুরি";
+        const w = AppState.workers.find(item => item.id === opt.value);
+        const wageInput = div.querySelector(".row-wage-input");
+        const workerLogs = AppState.logs.filter(l => l.worker_id === opt.value && +l.wage_amount > 0).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const autoWage = workerLogs.length ? workerLogs[0].wage_amount : (opt.getAttribute("data-rate") || "");
+        wageInput.value = autoWage || opt.getAttribute("data-rate") || "";
+        
+        const r = opt.getAttribute("data-role") || (w ? w.role : "মেস্তুরি");
+        const previewBox = div.querySelector(".worker-selected-preview");
+        const avatarBox = div.querySelector(".row-avatar-box");
+        const nameDisplay = div.querySelector(".row-worker-name-display");
         const tag = div.querySelector(".row-role-tag");
-        tag.textContent = r;
-        tag.className = `row-role-tag tag-badge ${r === 'কাটার' ? 'tag-cutter' : r === 'হেল্পার' ? 'tag-helper' : r === 'লেবার' ? 'tag-labor' : 'tag-mistri'}`;
-        tag.style.display = "inline-flex";
+
+        if (avatarBox && w) avatarBox.innerHTML = AppState.getAvatar(w, 'worker-avatar-xs');
+        if (nameDisplay && w) nameDisplay.textContent = w.name;
+        if (tag) {
+          tag.textContent = r;
+          tag.className = `row-role-tag tag-badge ${r === 'কাটার' ? 'tag-cutter' : r === 'হেল্পার' ? 'tag-helper' : r === 'লেবার' ? 'tag-labor' : 'tag-mistri'}`;
+        }
+        if (previewBox) previewBox.style.display = "inline-flex";
+      }
+    });
+    div.querySelector(".row-site-select").addEventListener("change", e => {
+      const wSel = div.querySelector(".row-worker-select");
+      const opt = wSel?.options[wSel.selectedIndex];
+      const wageInput = div.querySelector(".row-wage-input");
+      if (e.target.value) {
+        if (opt && opt.value && (!wageInput.value || wageInput.value === "0")) {
+          const workerLogs = AppState.logs.filter(l => l.worker_id === opt.value && +l.wage_amount > 0).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          const autoWage = workerLogs.length ? workerLogs[0].wage_amount : (opt.getAttribute("data-rate") || "");
+          wageInput.value = autoWage || opt.getAttribute("data-rate") || "";
+        }
+      } else {
+        if (!data.id) {
+          wageInput.value = "0";
+        }
       }
     });
     div.querySelector(".btn-remove-worker-row").addEventListener("click", () => {
@@ -134,10 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mb = document.querySelector("#modal-work-log .modal-body");
     if (mb) mb.scrollTop = mb.scrollHeight;
   });
-  document.getElementById("log-site-select")?.addEventListener("change", e => {
-    const val = e.target.value;
-    document.querySelectorAll(".row-site-select").forEach(sel => { if (!sel.value) sel.value = val; });
-  });
+
   document.getElementById("btn-topbar-action")?.addEventListener("click", () => {
     if (AppState.activeTab === "sites") openSite(); else if (AppState.activeTab === "workers") openWorker();
     else if (AppState.activeTab === "expenses") openExp(); else if (AppState.activeTab === "reports") window.print(); else openLog();
@@ -158,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
     AppState.filters.startDate = document.getElementById("filter-start-date")?.value || "";
     AppState.filters.endDate = document.getElementById("filter-end-date")?.value || "";
     AppState.filters.q = document.getElementById("filter-search")?.value || "";
-    Render.logs(); Render.expenses();
+    Render.logs(); Render.expenses(); Render.reports();
   };
   document.querySelectorAll("#filter-site, #filter-worker, #filter-role, #filter-start-date, #filter-end-date").forEach(el => el?.addEventListener("change", onFilter));
   document.getElementById("filter-search")?.addEventListener("input", onFilter);
@@ -168,12 +212,62 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter-start-date").value = ""; document.getElementById("filter-end-date").value = ""; document.getElementById("filter-search").value = ""; onFilter();
   });
 
-  // Actions
+  // View Modes Handlers
+  document.getElementById("btn-view-card")?.addEventListener("click", () => AppState.setViewMode("card"));
+  document.getElementById("btn-view-table")?.addEventListener("click", () => AppState.setViewMode("table"));
+
+  // Actions & Delegated Clicks
   document.addEventListener("click", async (e) => {
+    // Accordion Date Group Header Toggle (One Open at a Time with Smooth Animation)
+    const dateHeader = e.target.closest(".date-group-header");
+    if (dateHeader && !e.target.closest(".edit-log-btn, .delete-log-btn, .btn")) {
+      const card = dateHeader.closest(".date-group-card");
+      if (!card) return;
+      const date = dateHeader.dataset.date;
+      const container = document.getElementById("worklogs-container");
+      const isCurrentlyExpanded = card.classList.contains("is-expanded");
+
+      if (isCurrentlyExpanded) {
+        // Collapse clicked card
+        card.classList.remove("is-expanded");
+        card.classList.add("is-collapsed");
+        card.querySelector(".accordion-arrow")?.classList.remove("open");
+        AppState.expandedDate = null;
+      } else {
+        // Collapse all other expanded cards first
+        if (container) {
+          container.querySelectorAll(".date-group-card.is-expanded").forEach(c => {
+            c.classList.remove("is-expanded");
+            c.classList.add("is-collapsed");
+            c.querySelector(".accordion-arrow")?.classList.remove("open");
+          });
+        }
+        // Expand the clicked card
+        card.classList.remove("is-collapsed");
+        card.classList.add("is-expanded");
+        card.querySelector(".accordion-arrow")?.classList.add("open");
+        AppState.expandedDate = date;
+      }
+      return;
+    }
+
     const profW = e.target.closest(".view-worker-profile-btn"), editL = e.target.closest(".edit-log-btn"), delL = e.target.closest(".delete-log-btn"), editS = e.target.closest(".edit-site-btn"), delS = e.target.closest(".delete-site-btn"), editW = e.target.closest(".edit-worker-btn"), delW = e.target.closest(".delete-worker-btn"), editE = e.target.closest(".edit-expense-btn"), delE = e.target.closest(".delete-expense-btn");
 
     if (profW) { const w = AppState.workers.find(i => i.id === profW.dataset.id); Render.workerProfile(w); Actions.openModal("modal-worker-profile"); }
-    if (editL) { const l = AppState.logs.find(i => i.id === editL.dataset.id); if (l) { Render.dropdowns(); document.getElementById("log-id").value = l.id; document.getElementById("log-date").value = l.date; document.getElementById("log-site-select").value = l.site_id; document.getElementById("modal-log-title").textContent = "হাজিরা ও মজুরি তথ্য সম্পাদনা"; document.getElementById("btn-add-worker-row").style.display = "none"; const c = document.getElementById("worker-rows-container"); c.innerHTML = ""; addWorkerRow(l); Actions.openModal("modal-work-log"); } }
+    if (editL) { 
+      const l = AppState.logs.find(i => i.id === editL.dataset.id); 
+      if (l) { 
+        Render.dropdowns(); 
+        document.getElementById("log-id").value = l.id; 
+        document.getElementById("log-date").value = l.date; 
+        document.getElementById("modal-log-title").textContent = "হাজিরা ও মজুরি তথ্য সম্পাদনা"; 
+        document.getElementById("btn-add-worker-row").style.display = "none"; 
+        const c = document.getElementById("worker-rows-container"); 
+        c.innerHTML = ""; 
+        addWorkerRow(l); 
+        Actions.openModal("modal-work-log"); 
+      } 
+    }
     if (delL && confirm("মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
     if (editS) { const s = AppState.sites.find(i => i.id === editS.dataset.id); if (s) { document.getElementById("site-id").value = s.id; document.getElementById("site-name").value = s.name; document.getElementById("site-location").value = s.location || ""; document.getElementById("site-status").value = s.status || "active"; Actions.openModal("modal-site"); } }
     if (delS && confirm("মুছে ফেলতে চান?")) { await DB.remove("sites", delS.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
