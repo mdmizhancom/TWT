@@ -96,9 +96,10 @@
         </div>
 
         <div class="header-right">
-          <button id="btn-quick-add-log" class="btn btn-primary btn-sm btn-text-hide admin-only">
+          <!-- Context-Aware Dynamic Topbar Action Button -->
+          <button id="btn-topbar-action" class="btn btn-primary btn-sm admin-only">
             <i class="fa-solid fa-plus"></i>
-            <span>নতুন হাজিরা এন্ট্রি</span>
+            <span id="topbar-action-text">নতুন এন্ট্রি</span>
           </button>
           <button id="btn-admin-toggle" class="btn btn-primary btn-sm admin-lock-btn">
             <i class="fa-solid fa-key"></i>
@@ -289,6 +290,9 @@
                 <span>দৈনিক হাজিরা ও মজুরি খাতা</span>
                 <span id="worklogs-count" class="badge-pill viewer" style="margin-left: 0.5rem;">0 টি রেকর্ড</span>
               </div>
+              <button id="btn-add-log-tab" class="btn btn-primary btn-sm admin-only">
+                <i class="fa-solid fa-plus"></i> নতুন হাজিরা এন্ট্রি
+              </button>
             </div>
             <div class="card-body" style="padding: 0;">
               <div id="worklogs-container"></div>
@@ -304,7 +308,12 @@
               <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">বিল্ডিং ও প্রজেক্ট সমূহ</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted);">প্রতিটি বিল্ডিংয়ের আলাদা মজুরি ও মালামাল খরচের হিসাব</p>
             </div>
-            <span id="sites-count" class="badge-pill viewer">0 টি সাইট</span>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span id="sites-count" class="badge-pill viewer">0 টি সাইট</span>
+              <button id="btn-add-site-tab" class="btn btn-primary btn-sm admin-only">
+                <i class="fa-solid fa-plus"></i> নতুন বিল্ডিং যোগ করুন
+              </button>
+            </div>
           </div>
 
           <div id="sites-grid-container" class="cards-grid"></div>
@@ -317,7 +326,12 @@
               <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">কারিগর ও শ্রমিক ডিরেক্টরি</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted);">মেস্তুরি, হেল্পার ও তাদের মোট আয়, অগ্রিম ও বকেয়া খতিয়ান</p>
             </div>
-            <span id="workers-count" class="badge-pill viewer">0 জন কর্মী</span>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span id="workers-count" class="badge-pill viewer">0 জন কর্মী</span>
+              <button id="btn-add-worker-tab" class="btn btn-primary btn-sm admin-only">
+                <i class="fa-solid fa-plus"></i> নতুন কারিগর যোগ করুন
+              </button>
+            </div>
           </div>
 
           <div id="workers-grid-container" class="cards-grid"></div>
@@ -332,6 +346,9 @@
                 <span>অন্যান্য সাইট খরচ (মালামাল, টুলস ও পরিবহন)</span>
                 <span id="expenses-count" class="badge-pill viewer" style="margin-left: 0.5rem;">0 টি খরচ</span>
               </div>
+              <button id="btn-add-expense-tab" class="btn btn-primary btn-sm admin-only">
+                <i class="fa-solid fa-plus"></i> নতুন সাইট খরচ যোগ করুন
+              </button>
             </div>
             <div class="card-body" style="padding: 0;">
               <div id="expenses-container"></div>
@@ -400,7 +417,7 @@
   <div id="modal-work-log" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="modal-log-title">দৈনিক হাজিরা ও মজুরি এন্ট্রি</h3>
+        <h3 id="modal-log-title">দৈনিক হাজিরা / মজুরি / কাজের এন্ট্রি</h3>
         <button class="close-btn close-modal-btn">&times;</button>
       </div>
       <form id="form-work-log">
@@ -408,45 +425,51 @@
         <div class="modal-body">
           <div class="form-grid">
             <div class="form-group">
-              <label for="log-date">তারিখ (Date) *</label>
-              <input type="date" id="log-date" class="form-control default-today" required>
+              <label for="log-date">তারিখ (Date)</label>
+              <input type="date" id="log-date" class="form-control default-today">
             </div>
             <div class="form-group">
-              <label for="log-site-select">বিল্ডিং / সাইট *</label>
-              <select id="log-site-select" class="form-select select-site-options" required>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label for="log-site-select" style="margin-bottom: 0;">বিল্ডিং / সাইট</label>
+                <a href="javascript:void(0)" id="link-quick-add-site" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন বিল্ডিং</a>
+              </div>
+              <select id="log-site-select" class="form-select select-site-options">
                 <option value="" disabled selected>বিল্ডিং নির্বাচন করুন...</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="log-worker-select">শ্রমিক / কারিগর *</label>
-              <select id="log-worker-select" class="form-select select-worker-options" required>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label for="log-worker-select" style="margin-bottom: 0;">শ্রমিক / কারিগর</label>
+                <a href="javascript:void(0)" id="link-quick-add-worker" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন কারিগর</a>
+              </div>
+              <select id="log-worker-select" class="form-select select-worker-options">
                 <option value="" disabled selected>শ্রমিক নির্বাচন করুন...</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="log-role-select">পদবি / রোল *</label>
-              <select id="log-role-select" class="form-select" required>
-                <option value="মেস্তুরি">মেস্তুরি (Mistri)</option>
-                <option value="কাটার">টাইলস কাটার (Cutter)</option>
+              <label for="log-role-select">পদবি / ধরন</label>
+              <select id="log-role-select" class="form-select">
+                <option value="মেস্তুরি">মেস্তুরি (Head Mistri)</option>
+                <option value="কাটার">টাইলস কাটার (Tile Cutter)</option>
                 <option value="হেল্পার">হেল্পার (Helper)</option>
                 <option value="লেবার">সাধারণ লেবার (Labor)</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="log-wage-input">দৈনিক মজুরি (টাকা) *</label>
-              <input type="number" id="log-wage-input" class="form-control" placeholder="যেমন: ১০০০" min="0" required>
+              <label for="log-wage-input">মজুরি বাবদ টাকা (ঐচ্ছিক)</label>
+              <input type="number" id="log-wage-input" class="form-control" placeholder="যেমন: ১০০০" min="0">
             </div>
             <div class="form-group">
-              <label for="log-advance-input">অগ্রিম টাকা গ্রহণ (টাকা)</label>
-              <input type="number" id="log-advance-input" class="form-control" placeholder="০ বা গৃহীত টাকা" min="0" value="0">
+              <label for="log-advance-input">অগ্রিম টাকা গ্রহণ (ঐচ্ছিক)</label>
+              <input type="number" id="log-advance-input" class="form-control" placeholder="০ বা গৃহীত টাকা" min="0">
             </div>
             <div class="form-group col-span-2">
-              <label for="log-sqft-input">টাইলস কাজের পরিমাণ (SqFt)</label>
+              <label for="log-sqft-input">টাইলস কাজের পরিমাণ (SqFt) (ঐচ্ছিক)</label>
               <input type="number" id="log-sqft-input" class="form-control" placeholder="যেমন: ১৫০ (ঐচ্ছিক)" min="0" step="any">
             </div>
             <div class="form-group col-span-2">
-              <label for="log-remarks-input">কাজের বিবরণ / মন্তব্য</label>
-              <input type="text" id="log-remarks-input" class="form-control" placeholder="যেমন: ৫ম তলার বাথরুম ও কিচেন টাইলস">
+              <label for="log-remarks-input">কাজের বিবরণ / মন্তব্য / নোট</label>
+              <input type="text" id="log-remarks-input" class="form-control" placeholder="যেমন: ৫ তলার বাথরুম কাজ অথবা পুরনো মজুরি পরিশোধ">
             </div>
           </div>
         </div>
@@ -469,8 +492,8 @@
         <input type="hidden" id="site-id">
         <div class="modal-body">
           <div class="form-group">
-            <label for="site-name">বিল্ডিং / প্রজেক্টের নাম *</label>
-            <input type="text" id="site-name" class="form-control" placeholder="যেমন: গ্রিন ভ্যালি টাওয়ার" required>
+            <label for="site-name">বিল্ডিং / প্রজেক্টের নাম</label>
+            <input type="text" id="site-name" class="form-control" placeholder="যেমন: গ্রিন ভ্যালি টাওয়ার">
           </div>
           <div class="form-group">
             <label for="site-location">ঠিকানা / লোকেশন</label>
@@ -503,13 +526,13 @@
         <input type="hidden" id="worker-id">
         <div class="modal-body">
           <div class="form-group">
-            <label for="worker-name">শ্রমিক / কারিগরের নাম *</label>
-            <input type="text" id="worker-name" class="form-control" placeholder="যেমন: মো: রফিকুল ইসলাম" required>
+            <label for="worker-name">শ্রমিক / কারিগরের নাম</label>
+            <input type="text" id="worker-name" class="form-control" placeholder="যেমন: মো: রফিকুল ইসলাম">
           </div>
           <div class="form-grid">
             <div class="form-group">
-              <label for="worker-role">পদবি / ধরন *</label>
-              <select id="worker-role" class="form-select" required>
+              <label for="worker-role">পদবি / ধরন</label>
+              <select id="worker-role" class="form-select">
                 <option value="মেস্তুরি">মেস্তুরি (Head Mistri)</option>
                 <option value="কাটার">টাইলস কাটার (Tile Cutter)</option>
                 <option value="হেল্পার">হেল্পার (Helper)</option>
@@ -517,8 +540,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="worker-rate">দৈনিক মজুরি (টাকা) *</label>
-              <input type="number" id="worker-rate" class="form-control" placeholder="যেমন: ১০০০" min="0" required>
+              <label for="worker-rate">দৈনিক মজুরি (টাকা)</label>
+              <input type="number" id="worker-rate" class="form-control" placeholder="যেমন: ১০০০" min="0">
             </div>
           </div>
           <div class="form-grid">
@@ -627,18 +650,21 @@
         <input type="hidden" id="expense-id">
         <div class="modal-body">
           <div class="form-group">
-            <label for="expense-date">তারিখ *</label>
-            <input type="date" id="expense-date" class="form-control default-today" required>
+            <label for="expense-date">তারিখ</label>
+            <input type="date" id="expense-date" class="form-control default-today">
           </div>
           <div class="form-group">
-            <label for="expense-site-select">বিল্ডিং / সাইট *</label>
-            <select id="expense-site-select" class="form-select select-site-options" required>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <label for="expense-site-select" style="margin-bottom: 0;">বিল্ডিং / সাইট</label>
+              <a href="javascript:void(0)" id="link-quick-add-site-exp" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন বিল্ডিং</a>
+            </div>
+            <select id="expense-site-select" class="form-select select-site-options">
               <option value="" disabled selected>বিল্ডিং নির্বাচন করুন...</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="expense-category">খরচের খাত / ক্যাটাগরি *</label>
-            <select id="expense-category" class="form-select" required>
+            <label for="expense-category">খরচের খাত / ক্যাটাগরি</label>
+            <select id="expense-category" class="form-select">
               <option value="টাইলস পুটিং ও ব্লেড">টাইলস পুটিং ও কাটিং ব্লেড</option>
               <option value="সিমেন্ট ও বালি">সিমেন্ট ও কেমিক্যাল/বালি</option>
               <option value="টুলস ও যন্ত্রপাতি">টুলস ও যন্ত্রপাতি</option>
@@ -648,8 +674,8 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="expense-amount">টাকার পরিমাণ *</label>
-            <input type="number" id="expense-amount" class="form-control" placeholder="যেমন: ১২০০" min="0" required>
+            <label for="expense-amount">টাকার পরিমাণ</label>
+            <input type="number" id="expense-amount" class="form-control" placeholder="যেমন: ১২০০" min="0">
           </div>
           <div class="form-group">
             <label for="expense-note">খরচের বিস্তারিত বিবরণ</label>

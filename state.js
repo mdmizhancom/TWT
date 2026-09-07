@@ -26,6 +26,14 @@ const AppState = {
     return `<div class="worker-avatar ${cls}">${initial}</div>`;
   },
 
+  getRoleBadge(role) {
+    const r = role || "মেস্তুরি";
+    if (r.includes("কাটার")) return `<span class="tag-badge tag-cutter"><i class="fa-solid fa-scissors"></i> ${r}</span>`;
+    if (r.includes("হেল্পার")) return `<span class="tag-badge tag-helper"><i class="fa-solid fa-hands-holding"></i> ${r}</span>`;
+    if (r.includes("লেবার")) return `<span class="tag-badge tag-labor"><i class="fa-solid fa-person-digging"></i> ${r}</span>`;
+    return `<span class="tag-badge tag-mistri"><i class="fa-solid fa-trowel"></i> ${r}</span>`;
+  },
+
   filterLogs() {
     const { siteId, workerId, role, startDate, endDate, q } = this.filters;
     return this.logs.filter(l => {

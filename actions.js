@@ -17,24 +17,30 @@ const Actions = {
     e.preventDefault();
     const id = document.getElementById("log-id").value;
     const sSel = document.getElementById("log-site-select"), wSel = document.getElementById("log-worker-select");
-    const data = {
-      date: document.getElementById("log-date").value,
-      site_id: sSel.value, site_name: sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || "",
-      worker_id: wSel.value, worker_name: wSel.options[wSel.selectedIndex]?.getAttribute("data-name") || "",
-      role: document.getElementById("log-role-select").value,
-      wage_amount: +document.getElementById("log-wage-input").value || 0,
-      advance_paid: +document.getElementById("log-advance-input").value || 0,
-      work_sqft: +document.getElementById("log-sqft-input").value || 0,
-      remarks: document.getElementById("log-remarks-input").value
-    };
+    const date = document.getElementById("log-date").value || new Date().toISOString().split("T")[0];
+    const wage = +document.getElementById("log-wage-input").value || 0;
+    const adv = +document.getElementById("log-advance-input").value || 0;
+    const sqft = +document.getElementById("log-sqft-input").value || 0;
+    const remarks = document.getElementById("log-remarks-input").value.trim();
+    const role = document.getElementById("log-role-select").value || "মেস্তুরি";
+    const sId = sSel.value || "", sName = sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || (sId ? "বিল্ডিং" : "সাধারণ সাইট");
+    const wId = wSel.value || "", wName = wSel.options[wSel.selectedIndex]?.getAttribute("data-name") || (wId ? "কর্মী" : "অনির্দিষ্ট কর্মী");
+
+    if (!sId && !wId && !wage && !adv && !sqft && !remarks) {
+      return Actions.toast("কমপক্ষে যেকোনো একটি তথ্য লিখুন বা সিলেক্ট করুন!", "warning");
+    }
+
+    const data = { date, site_id: sId, site_name: sName, worker_id: wId, worker_name: wName, role, wage_amount: wage, advance_paid: adv, work_sqft: sqft, remarks };
     if (id) await DB.update("work_logs", id, data); else await DB.add("work_logs", data);
-    Actions.closeModal("modal-work-log"); Actions.toast("হাজিরা ও মজুরি সংরক্ষিত হয়েছে!");
+    Actions.closeModal("modal-work-log"); Actions.toast("হাজিরা ও মজুরি তথ্য সংরক্ষিত হয়েছে!");
   },
 
   async saveSite(e) {
     e.preventDefault();
     const id = document.getElementById("site-id").value;
-    const data = { name: document.getElementById("site-name").value, location: document.getElementById("site-location").value, status: document.getElementById("site-status").value };
+    const name = document.getElementById("site-name").value.trim(), loc = document.getElementById("site-location").value.trim(), status = document.getElementById("site-status").value || "active";
+    if (!name && !loc) return Actions.toast("কমপক্ষে বিল্ডিংয়ের নাম বা লোকেশন দিন!", "warning");
+    const data = { name: name || "নতুন প্রজেক্ট সাইট", location: loc || "ঠিকানা নেই", status };
     if (id) await DB.update("sites", id, data); else await DB.add("sites", data);
     Actions.closeModal("modal-site"); Actions.toast("বিল্ডিং তথ্য সংরক্ষিত হয়েছে!");
   },
@@ -42,11 +48,11 @@ const Actions = {
   async saveWorker(e) {
     e.preventDefault();
     const id = document.getElementById("worker-id").value;
-    const data = {
-      name: document.getElementById("worker-name").value, role: document.getElementById("worker-role").value,
-      daily_rate: +document.getElementById("worker-rate").value || 0, phone: document.getElementById("worker-phone").value,
-      location: document.getElementById("worker-location")?.value || "", avatar_url: document.getElementById("worker-avatar-url")?.value || ""
-    };
+    const name = document.getElementById("worker-name").value.trim(), role = document.getElementById("worker-role").value || "মেস্তুরি";
+    const rate = +document.getElementById("worker-rate").value || 0, phone = document.getElementById("worker-phone").value.trim();
+    const loc = document.getElementById("worker-location")?.value.trim() || "", avatar = document.getElementById("worker-avatar-url")?.value.trim() || "";
+    if (!name && !phone && !rate && !loc) return Actions.toast("কমপক্ষে শ্রমিকের নাম বা কোনো তথ্য দিন!", "warning");
+    const data = { name: name || "নামবিহীন কারিগর", role, daily_rate: rate, phone, location: loc, avatar_url: avatar };
     if (id) await DB.update("workers", id, data); else await DB.add("workers", data);
     Actions.closeModal("modal-worker"); Actions.toast("শ্রমিক তথ্য সংরক্ষিত হয়েছে!");
   },
@@ -54,11 +60,11 @@ const Actions = {
   async saveExpense(e) {
     e.preventDefault();
     const id = document.getElementById("expense-id").value, sSel = document.getElementById("expense-site-select");
-    const data = {
-      date: document.getElementById("expense-date").value, site_id: sSel.value,
-      site_name: sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || "",
-      category: document.getElementById("expense-category").value, amount: +document.getElementById("expense-amount").value || 0, note: document.getElementById("expense-note").value
-    };
+    const date = document.getElementById("expense-date").value || new Date().toISOString().split("T")[0];
+    const cat = document.getElementById("expense-category").value || "অন্যান্য বিবিধ খরচ", amt = +document.getElementById("expense-amount").value || 0, note = document.getElementById("expense-note").value.trim();
+    const sId = sSel.value || "", sName = sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || "সাধারণ সাইট";
+    if (!amt && !note && !sId) return Actions.toast("কমপক্ষে খরচের পরিমাণ বা বিবরণ দিন!", "warning");
+    const data = { date, site_id: sId, site_name: sName, category: cat, amount: amt, note };
     if (id) await DB.update("expenses", id, data); else await DB.add("expenses", data);
     Actions.closeModal("modal-expense"); Actions.toast("সাইট খরচ সংরক্ষিত হয়েছে!");
   },
@@ -71,7 +77,7 @@ const Actions = {
       messagingSenderId: document.getElementById("cfg-sender-id").value.trim(), appId: document.getElementById("cfg-app-id").value.trim()
     };
     DB.saveConfig(cfg); Actions.closeModal("modal-settings");
-    Actions.toast("ফায়ারবেস কনফিগারেশন আপডেট ও পুনঃসংযোগ সম্পন্ন হয়েছে!", "success");
+    Actions.toast("ফায়ারবেস কনফিগারেশন আপডেট সম্পন্ন হয়েছে!", "success");
   },
 
   changePassword(e) {
