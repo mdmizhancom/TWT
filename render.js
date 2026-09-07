@@ -303,8 +303,9 @@ const Render = {
     el.innerHTML = AppState.workers.length ? AppState.workers.map(w => {
       const wLogs = AppState.logs.filter(l => l.worker_id === w.id);
       const earned = wLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), adv = wLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0);
-      const workDays = wLogs.filter(l => Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") || +l.wage_amount > 0).length;
-      return `<div class="entity-card"><div><div class="entity-card-header"><div class="worker-row-info">${AppState.getAvatar(w)}<div><h4 class="entity-title">${w.name}</h4><div class="entity-subtitle"><i class="fa-solid fa-phone"></i> ${w.phone || '-'} | <i class="fa-solid fa-location-dot"></i> ${w.location || 'ঠিকানা নেই'}</div></div></div>${AppState.getRoleBadge(w.role)}</div><div class="entity-stats"><div class="stat-item"><span>মোট আয়</span><span class="money-green">${AppState.money(earned)}</span></div><div class="stat-item"><span>মোট জমা</span><span class="money-amber">${AppState.money(adv)}</span></div><div class="stat-item"><span>অবশিষ্ট পাওনা</span><span class="${earned - adv > 0 ? 'money-rose' : 'money-green'}">${AppState.money(earned - adv)}</span></div><div class="stat-item"><span>কাজের দিন</span><span>${workDays} দিন</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-primary btn-sm view-worker-profile-btn" data-id="${w.id}"><i class="fa-solid fa-user"></i> প্রোফাইল ভিউ</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-worker-btn" data-id="${w.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-worker-btn" data-id="${w.id}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
+      const actualWorkDays = wLogs.filter(l => (Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") && (+l.wage_amount > 0 || +l.work_sqft > 0)) || +l.wage_amount > 0).length;
+      const paymentOnlyDays = wLogs.filter(l => (!l.site_id || !l.site_name || l.site_name === "কোনো সাইট নেই (শুধু পেমেন্ট)" || +l.wage_amount === 0) && +l.advance_paid > 0).length;
+      return `<div class="entity-card"><div><div class="entity-card-header"><div class="worker-row-info">${AppState.getAvatar(w)}<div><h4 class="entity-title">${w.name}</h4><div class="entity-subtitle"><i class="fa-solid fa-phone"></i> ${w.phone || '-'} | <i class="fa-solid fa-location-dot"></i> ${w.location || 'ঠিকানা নেই'}</div></div></div>${AppState.getRoleBadge(w.role)}</div><div class="entity-stats"><div class="stat-item"><span>মোট আয়</span><span class="money-green">${AppState.money(earned)}</span></div><div class="stat-item"><span>মোট জমা</span><span class="money-amber">${AppState.money(adv)}</span></div><div class="stat-item"><span>অবশিষ্ট পাওনা</span><span class="${earned - adv > 0 ? 'money-rose' : 'money-green'}">${AppState.money(earned - adv)}</span></div><div class="stat-item"><span>কাজের দিন</span><span style="font-weight:700;">${actualWorkDays} দিন ${paymentOnlyDays > 0 ? `<small style="display:block;font-size:0.7rem;color:#d97706;font-weight:600;">(+${paymentOnlyDays} দিন শুধু জমা)</small>` : ''}</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-primary btn-sm view-worker-profile-btn" data-id="${w.id}"><i class="fa-solid fa-user"></i> প্রোফাইল ভিউ</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-worker-btn" data-id="${w.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-worker-btn" data-id="${w.id}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
     }).join('') : '<div class="empty-state"><p><i class="fa-solid fa-users" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;"></i><br>কোনো শ্রমিক যোগ করা হয়নি।</p></div>';
   },
 
@@ -313,7 +314,9 @@ const Render = {
     const balanceMap = AppState.getRunningBalances();
     const wLogs = AppState.logs.filter(l => l.worker_id === w.id);
     const earned = wLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), adv = wLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0), sqft = wLogs.reduce((acc, l) => acc + (+l.work_sqft || 0), 0);
-    const workDays = wLogs.filter(l => Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") || +l.wage_amount > 0).length;
+    const actualWorkDays = wLogs.filter(l => (Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") && (+l.wage_amount > 0 || +l.work_sqft > 0)) || +l.wage_amount > 0).length;
+    const paymentOnlyDays = wLogs.filter(l => (!l.site_id || !l.site_name || l.site_name === "কোনো সাইট নেই (শুধু পেমেন্ট)" || +l.wage_amount === 0) && +l.advance_paid > 0).length;
+
     document.getElementById("prof-avatar-wrap").innerHTML = AppState.getAvatar(w, "worker-avatar-lg");
     document.getElementById("prof-name").textContent = w.name;
     document.getElementById("prof-role").innerHTML = AppState.getRoleBadge(w.role);
@@ -323,7 +326,8 @@ const Render = {
     document.getElementById("prof-earned").textContent = AppState.money(earned);
     document.getElementById("prof-advance").textContent = AppState.money(adv);
     document.getElementById("prof-balance").textContent = AppState.money(earned - adv);
-    document.getElementById("prof-days").textContent = workDays + " দিন";
+    if (document.getElementById("prof-work-days")) document.getElementById("prof-work-days").textContent = actualWorkDays + " দিন";
+    if (document.getElementById("prof-payment-days")) document.getElementById("prof-payment-days").textContent = paymentOnlyDays + " দিন";
     document.getElementById("prof-sqft").textContent = sqft + " SqFt";
     document.getElementById("prof-history-table").innerHTML = wLogs.length ? wLogs.map(l => {
       const cumDue = balanceMap.has(l.id) ? balanceMap.get(l.id) : ((+l.wage_amount || 0) - (+l.advance_paid || 0));

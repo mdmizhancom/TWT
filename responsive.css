@@ -570,6 +570,11 @@ html, body {
     max-height: calc(94vh - 120px);
   }
 
+  #modal-worker-profile .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
     gap: 0.5rem;
