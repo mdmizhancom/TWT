@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiles Works Tracer - টাইলস কাজ ও মজুরি ট্র্যাকার</title>
+  <meta name="description" content="দৈনিক হাজিরা, কারিগর মজুরি, অগ্রিম টাকা এবং সাইটের খরচ হিসাব রাখার আধুনিক অনলাইন ট্র্যাকার।">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Hind Siliguri -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Backdrop (for mobile) -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div class="logo-text">
+          <h1>টাইলস ট্র্যাকার</h1>
+          <span>Tiles Works Tracer</span>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>ড্যাশবোর্ড (Overview)</span>
+        </a>
+        <a href="#logs" class="nav-item" data-tab="logs">
+          <i class="fa-solid fa-clipboard-user"></i>
+          <span>দৈনিক হাজিরা ও মজুরি</span>
+        </a>
+        <a href="#sites" class="nav-item" data-tab="sites">
+          <i class="fa-solid fa-building-circle-check"></i>
+          <span>বিল্ডিং ও সাইট সমূহ</span>
+        </a>
+        <a href="#workers" class="nav-item" data-tab="workers">
+          <i class="fa-solid fa-users-gear"></i>
+          <span>কারিগর ও শ্রমিক তালিকা</span>
+        </a>
+        <a href="#expenses" class="nav-item" data-tab="expenses">
+          <i class="fa-solid fa-receipt"></i>
+          <span>অন্যান্য সাইট খরচ</span>
+        </a>
+        <a href="#reports" class="nav-item" data-tab="reports">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>রিপোর্ট ও প্রিন্ট</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-status-card">
+          <div class="admin-badge-wrap">
+            <span id="admin-status-pill" class="badge-pill viewer">
+              <i class="fa-solid fa-eye"></i> ভিউয়ার মোড
+            </span>
+            <button id="btn-open-settings" class="btn btn-secondary btn-icon btn-sm admin-only" title="সিকিউরিটি ও ফায়ারবেস সেটিংস">
+              <i class="fa-solid fa-gear"></i>
+            </button>
+          </div>
+          <p style="font-size: 0.725rem; color: var(--text-muted); line-height: 1.3;">
+            ডাটা পরিবর্তন করতে অ্যাডমিন আনলক করুন।
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button id="mobile-menu-toggle" class="mobile-menu-btn" title="মেনু খুলুন">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <h2 id="current-page-title">ড্যাশবোর্ড ও সংক্ষিপ্ত হিসাব</h2>
+            <p id="current-page-desc">দৈনিক কার্যক্রম, মোট মজুরি ও খরচের একনজর হিসাব</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button id="btn-quick-add-log" class="btn btn-primary btn-sm btn-text-hide admin-only">
+            <i class="fa-solid fa-plus"></i>
+            <span>নতুন হাজিরা এন্ট্রি</span>
+          </button>
+          <button id="btn-admin-toggle" class="btn btn-primary btn-sm admin-lock-btn">
+            <i class="fa-solid fa-key"></i>
+            <span>আনলক করুন (Unlock)</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Printable Document Header -->
+      <div class="print-header">
+        <h1 style="font-size: 1.6rem; font-weight: 800;">টাইলস কাজের হিসাব ও মজুরি ভাউচার</h1>
+        <p style="font-size: 0.9rem; color: #555;">Tiles Works Tracer Expense & Wage Report</p>
+      </div>
+
+      <!-- Page Content Tabs -->
+      <main class="page-content">
+
+        <!-- ================= TAB 1: DASHBOARD ================= -->
+        <section id="tab-dashboard" class="tab-content active">
+          
+          <!-- KPI Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon-wrapper blue">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+              <div class="stat-info">
+                <h3>সর্বমোট খরচ (Total Cost)</h3>
+                <div id="stat-total-expense" class="stat-value">৳০</div>
+                <div class="stat-sub">মজুরি + মালামাল খরচ</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper green">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+              </div>
+              <div class="stat-info">
+                <h3>মোট মজুরি প্রদান</h3>
+                <div id="stat-total-wages" class="stat-value">৳০</div>
+                <div class="stat-sub">শ্রমিকদের অর্জিত মজুরি</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper amber">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+              </div>
+              <div class="stat-info">
+                <h3>মোট অগ্রিম নেওয়া</h3>
+                <div id="stat-total-advance" class="stat-value">৳০</div>
+                <div class="stat-sub">কাজের পূর্বে গৃহীত টাকা</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper rose">
+                <i class="fa-solid fa-scale-unbalanced-flip"></i>
+              </div>
+              <div class="stat-info">
+                <h3>অবশিষ্ট বকেয়া মজুরি</h3>
+                <div id="stat-wage-balance" class="stat-value">৳০</div>
+                <div class="stat-sub">মোট মজুরি - অগ্রিম টাকা</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper purple">
+                <i class="fa-solid fa-shapes"></i>
+              </div>
+              <div class="stat-info">
+                <h3>টাইলস কাজের পরিমাণ</h3>
+                <div id="stat-total-sqft" class="stat-value">০ SqFt</div>
+                <div class="stat-sub">পরিমাপকৃত মোট কাজ</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper blue">
+                <i class="fa-solid fa-building-user"></i>
+              </div>
+              <div class="stat-info">
+                <h3>বিল্ডিং ও কারিগর</h3>
+                <div class="stat-value">
+                  <span id="stat-total-sites">০</span> / <span id="stat-total-workers">০</span>
+                </div>
+                <div class="stat-sub">প্রজেক্ট সাইট / কারিগর সংখ্যা</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card admin-only">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-bolt" style="color: var(--warning);"></i>
+                <span>কুইক অ্যাকশন (Quick Actions)</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 1rem 1.5rem;">
+              <div class="quick-actions-bar" style="margin-bottom: 0;">
+                <button id="btn-open-add-log" class="btn btn-primary">
+                  <i class="fa-solid fa-calendar-plus"></i> নতুন দৈনিক হাজিরা এন্ট্রি
+                </button>
+                <button id="btn-open-add-site" class="btn btn-secondary">
+                  <i class="fa-solid fa-city"></i> নতুন বিল্ডিং যোগ করুন
+                </button>
+                <button id="btn-open-add-worker" class="btn btn-secondary">
+                  <i class="fa-solid fa-user-plus"></i> নতুন শ্রমিক / কারিগর
+                </button>
+                <button id="btn-open-add-expense" class="btn btn-secondary">
+                  <i class="fa-solid fa-receipt"></i> নতুন সাইট খরচ যোগ করুন
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity Card -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i>
+                <span>সাম্প্রতিক দৈনিক কাজের এন্ট্রি (Recent Logs)</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div id="dashboard-recent-logs"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ================= TAB 2: DAILY WORK LOGS ================= -->
+        <section id="tab-logs" class="tab-content">
+          
+          <!-- Filter Controls -->
+          <div class="filter-bar">
+            <div class="search-input-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="filter-search" class="form-control" placeholder="নাম, বিল্ডিং বা কাজের বিবরণ দিয়ে খুঁজুন...">
+            </div>
+
+            <div class="filter-group">
+              <label><i class="fa-solid fa-building"></i> বিল্ডিং / সাইট</label>
+              <select id="filter-site" class="form-select filter-select select-site-options">
+                <option value="all">সব বিল্ডিং / অল প্রজেক্ট</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label><i class="fa-solid fa-user"></i> কারিগর / শ্রমিক</label>
+              <select id="filter-worker" class="form-select filter-select select-worker-options">
+                <option value="all">সকল কারিগর / শ্রমিক</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label><i class="fa-solid fa-tag"></i> পদবি / রোল</label>
+              <select id="filter-role" class="form-select filter-select">
+                <option value="all">সকল পদবি (All Roles)</option>
+                <option value="মেস্তুরি">মেস্তুরি (Mistri)</option>
+                <option value="কাটার">টাইলস কাটার (Cutter)</option>
+                <option value="হেল্পার">হেল্পার (Helper)</option>
+                <option value="লেবার">সাধারণ লেবার (Labor)</option>
+              </select>
+            </div>
+
+            <div class="filter-group" style="max-width: 140px;">
+              <label><i class="fa-solid fa-calendar"></i> শুরুর তারিখ</label>
+              <input type="date" id="filter-start-date" class="form-control">
+            </div>
+
+            <div class="filter-group" style="max-width: 140px;">
+              <label><i class="fa-solid fa-calendar"></i> শেষ তারিখ</label>
+              <input type="date" id="filter-end-date" class="form-control">
+            </div>
+
+            <button id="btn-reset-filters" class="btn btn-secondary" title="ফিল্টার রিসেট করুন" style="height: 40px;">
+              <i class="fa-solid fa-arrow-rotate-left"></i> রিসেট
+            </button>
+          </div>
+
+          <!-- Filtered Work Logs Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
+                <span>দৈনিক হাজিরা ও মজুরি খাতা</span>
+                <span id="worklogs-count" class="badge-pill viewer" style="margin-left: 0.5rem;">0 টি রেকর্ড</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div id="worklogs-container"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ================= TAB 3: SITES / BUILDINGS ================= -->
+        <section id="tab-sites" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">বিল্ডিং ও প্রজেক্ট সমূহ</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">প্রতিটি বিল্ডিংয়ের আলাদা মজুরি ও মালামাল খরচের হিসাব</p>
+            </div>
+            <span id="sites-count" class="badge-pill viewer">0 টি সাইট</span>
+          </div>
+
+          <div id="sites-grid-container" class="cards-grid"></div>
+        </section>
+
+        <!-- ================= TAB 4: WORKERS DIRECTORY ================= -->
+        <section id="tab-workers" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">কারিগর ও শ্রমিক ডিরেক্টরি</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">মেস্তুরি, হেল্পার ও তাদের মোট আয়, অগ্রিম ও বকেয়া খতিয়ান</p>
+            </div>
+            <span id="workers-count" class="badge-pill viewer">0 জন কর্মী</span>
+          </div>
+
+          <div id="workers-grid-container" class="cards-grid"></div>
+        </section>
+
+        <!-- ================= TAB 5: SITE OTHER EXPENSES ================= -->
+        <section id="tab-expenses" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-receipt" style="color: var(--danger);"></i>
+                <span>অন্যান্য সাইট খরচ (মালামাল, টুলস ও পরিবহন)</span>
+                <span id="expenses-count" class="badge-pill viewer" style="margin-left: 0.5rem;">0 টি খরচ</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div id="expenses-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 6: REPORTS & PRINT ================= -->
+        <section id="tab-reports" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-print" style="color: var(--primary);"></i>
+                <span>প্রিন্ট ও এক্সপোর্ট রিপোর্ট</span>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-export-csv" class="btn btn-secondary btn-sm">
+                  <i class="fa-solid fa-file-csv"></i> CSV ডাউনলোড
+                </button>
+                <button id="btn-print-report" class="btn btn-primary btn-sm">
+                  <i class="fa-solid fa-print"></i> প্রিন্ট করুন
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="report-table-view">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                  উপরের 'দৈনিক হাজিরা' ট্যাবে গিয়ে আপনার প্রয়োজনীয় বিল্ডিং বা তারিখ ফিল্টার করে 'প্রিন্ট করুন' বা 'CSV ডাউনলোড' চাপুন।
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <div class="mobile-bottom-nav">
+    <button class="mobile-nav-btn active" data-tab="dashboard">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>হোম</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="logs">
+      <i class="fa-solid fa-clipboard-user"></i>
+      <span>হাজিরা</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="sites">
+      <i class="fa-solid fa-city"></i>
+      <span>সাইট</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="workers">
+      <i class="fa-solid fa-users"></i>
+      <span>কারিগর</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="expenses">
+      <i class="fa-solid fa-receipt"></i>
+      <span>খরচ</span>
+    </button>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal 1: Work Log Entry -->
+  <div id="modal-work-log" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-log-title">দৈনিক হাজিরা ও মজুরি এন্ট্রি</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <form id="form-work-log">
+        <input type="hidden" id="log-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="log-date">তারিখ (Date) *</label>
+              <input type="date" id="log-date" class="form-control default-today" required>
+            </div>
+            <div class="form-group">
+              <label for="log-site-select">বিল্ডিং / সাইট *</label>
+              <select id="log-site-select" class="form-select select-site-options" required>
+                <option value="" disabled selected>বিল্ডিং নির্বাচন করুন...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="log-worker-select">শ্রমিক / কারিগর *</label>
+              <select id="log-worker-select" class="form-select select-worker-options" required>
+                <option value="" disabled selected>শ্রমিক নির্বাচন করুন...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="log-role-select">পদবি / রোল *</label>
+              <select id="log-role-select" class="form-select" required>
+                <option value="মেস্তুরি">মেস্তুরি (Mistri)</option>
+                <option value="কাটার">টাইলস কাটার (Cutter)</option>
+                <option value="হেল্পার">হেল্পার (Helper)</option>
+                <option value="লেবার">সাধারণ লেবার (Labor)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="log-wage-input">দৈনিক মজুরি (টাকা) *</label>
+              <input type="number" id="log-wage-input" class="form-control" placeholder="যেমন: ১০০০" min="0" required>
+            </div>
+            <div class="form-group">
+              <label for="log-advance-input">অগ্রিম টাকা গ্রহণ (টাকা)</label>
+              <input type="number" id="log-advance-input" class="form-control" placeholder="০ বা গৃহীত টাকা" min="0" value="0">
+            </div>
+            <div class="form-group col-span-2">
+              <label for="log-sqft-input">টাইলস কাজের পরিমাণ (SqFt)</label>
+              <input type="number" id="log-sqft-input" class="form-control" placeholder="যেমন: ১৫০ (ঐচ্ছিক)" min="0" step="any">
+            </div>
+            <div class="form-group col-span-2">
+              <label for="log-remarks-input">কাজের বিবরণ / মন্তব্য</label>
+              <input type="text" id="log-remarks-input" class="form-control" placeholder="যেমন: ৫ম তলার বাথরুম ও কিচেন টাইলস">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Site / Building -->
+  <div id="modal-site" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-site-title">নতুন বিল্ডিং বা প্রজেক্ট যোগ করুন</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <form id="form-site">
+        <input type="hidden" id="site-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="site-name">বিল্ডিং / প্রজেক্টের নাম *</label>
+            <input type="text" id="site-name" class="form-control" placeholder="যেমন: গ্রিন ভ্যালি টাওয়ার" required>
+          </div>
+          <div class="form-group">
+            <label for="site-location">ঠিকানা / লোকেশন</label>
+            <input type="text" id="site-location" class="form-control" placeholder="যেমন: মিরপুর-১২, ঢাকা">
+          </div>
+          <div class="form-group">
+            <label for="site-status">কাজের অবস্থা (Status)</label>
+            <select id="site-status" class="form-select">
+              <option value="active">চলমান (Active)</option>
+              <option value="completed">সম্পন্ন (Completed)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Worker (With Photo URL & Location) -->
+  <div id="modal-worker" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-worker-title">নতুন কারিগর / শ্রমিক যোগ করুন</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <form id="form-worker">
+        <input type="hidden" id="worker-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="worker-name">শ্রমিক / কারিগরের নাম *</label>
+            <input type="text" id="worker-name" class="form-control" placeholder="যেমন: মো: রফিকুল ইসলাম" required>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="worker-role">পদবি / ধরন *</label>
+              <select id="worker-role" class="form-select" required>
+                <option value="মেস্তুরি">মেস্তুরি (Head Mistri)</option>
+                <option value="কাটার">টাইলস কাটার (Tile Cutter)</option>
+                <option value="হেল্পার">হেল্পার (Helper)</option>
+                <option value="লেবার">সাধারণ লেবার (Labor)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="worker-rate">দৈনিক মজুরি (টাকা) *</label>
+              <input type="number" id="worker-rate" class="form-control" placeholder="যেমন: ১০০০" min="0" required>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="worker-phone">মোবাইল নম্বর</label>
+              <input type="text" id="worker-phone" class="form-control" placeholder="যেমন: 01711-XXXXXX">
+            </div>
+            <div class="form-group">
+              <label for="worker-location">ঠিকানা / এলাকা</label>
+              <input type="text" id="worker-location" class="form-control" placeholder="যেমন: মিরপুর, ঢাকা">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="worker-avatar-url"><i class="fa-solid fa-image"></i> প্রোফাইল ছবির লিংক / URL (ঐচ্ছিক)</label>
+            <input type="url" id="worker-avatar-url" class="form-control" placeholder="https://example.com/photo.jpg">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3.1: Worker Full Profile & History View -->
+  <div id="modal-worker-profile" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-id-card" style="color: var(--primary);"></i> কারিগর প্রোফাইল ও খতিয়ান</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        
+        <!-- Profile Header -->
+        <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-lg);">
+          <div id="prof-avatar-wrap"></div>
+          <div>
+            <h3 id="prof-name" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);"></h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem;">
+              <span id="prof-role" class="tag-badge tag-mistri"></span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> <span id="prof-phone"></span></span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> <span id="prof-location"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Grid -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">দৈনিক রেট</div>
+            <div id="prof-rate" style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">৳০</div>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">মোট আয়</div>
+            <div id="prof-earned" style="font-size: 1.1rem; font-weight: 800; color: var(--success);">৳০</div>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">মোট অগ্রিম</div>
+            <div id="prof-advance" style="font-size: 1.1rem; font-weight: 800; color: var(--warning);">৳০</div>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">অবশিষ্ট পাওনা</div>
+            <div id="prof-balance" style="font-size: 1.1rem; font-weight: 800; color: var(--danger);">৳০</div>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">হাজিরা / কাজ</div>
+            <div style="font-size: 1.05rem; font-weight: 800;"><span id="prof-days">০ দিন</span> | <span id="prof-sqft">০</span></div>
+          </div>
+        </div>
+
+        <!-- History Table -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+          <i class="fa-solid fa-clock-rotate-left"></i> কাজের খতিয়ান ও ইতিহাস
+        </h4>
+        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>তারিখ</th>
+                <th>বিল্ডিং</th>
+                <th>মজুরি</th>
+                <th>অগ্রিম</th>
+                <th>কাজের বিবরণ / SqFt</th>
+              </tr>
+            </thead>
+            <tbody id="prof-history-table"></tbody>
+          </table>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-modal-btn">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Expense -->
+  <div id="modal-expense" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-expense-title">নতুন সাইট খরচ যোগ করুন</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <form id="form-expense">
+        <input type="hidden" id="expense-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="expense-date">তারিখ *</label>
+            <input type="date" id="expense-date" class="form-control default-today" required>
+          </div>
+          <div class="form-group">
+            <label for="expense-site-select">বিল্ডিং / সাইট *</label>
+            <select id="expense-site-select" class="form-select select-site-options" required>
+              <option value="" disabled selected>বিল্ডিং নির্বাচন করুন...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="expense-category">খরচের খাত / ক্যাটাগরি *</label>
+            <select id="expense-category" class="form-select" required>
+              <option value="টাইলস পুটিং ও ব্লেড">টাইলস পুটিং ও কাটিং ব্লেড</option>
+              <option value="সিমেন্ট ও বালি">সিমেন্ট ও কেমিক্যাল/বালি</option>
+              <option value="টুলস ও যন্ত্রপাতি">টুলস ও যন্ত্রপাতি</option>
+              <option value="গাড়ি ও পরিবহন ভাড়া">গাড়ি ও পরিবহন ভাড়া</option>
+              <option value="শ্রমিক খাবার ও নাস্তা">শ্রমিক খাবার ও নাস্তা</option>
+              <option value="অন্যান্য বিবিধ খরচ">অন্যান্য বিবিধ খরচ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="expense-amount">টাকার পরিমাণ *</label>
+            <input type="number" id="expense-amount" class="form-control" placeholder="যেমন: ১২০০" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="expense-note">খরচের বিস্তারিত বিবরণ</label>
+            <input type="text" id="expense-note" class="form-control" placeholder="যেমন: ৩ প্যাকেট পুটিং ও ব্লেড ক্রয়">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Admin Unlock (Password) -->
+  <div id="modal-admin-unlock" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> অ্যাডমিন আনলক</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <form id="form-admin-unlock">
+        <div class="modal-body" style="text-align: center;">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            তথ্য এন্ট্রি, এডিট বা পরিবর্তনের জন্য অ্যাডমিন পাসওয়ার্ড দিন।
+          </p>
+          <div class="form-group">
+            <input type="password" id="input-admin-pass" class="form-control" placeholder="পাসওয়ার্ড লিখুন" style="text-align: center; font-size: 1.1rem;" required autofocus>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-unlock"></i> আনলক করুন
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 6: Settings (Password & Firebase Config) -->
+  <div id="modal-settings" class="modal-overlay">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-gear" style="color: var(--primary);"></i> সেটিংস ও সিকিউরিটি</h3>
+        <button class="close-btn close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Password Change Section -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+          <i class="fa-solid fa-key" style="color: var(--warning);"></i> অ্যাডমিন পাসওয়ার্ড পরিবর্তন
+        </h4>
+        <form id="form-change-password" style="margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
+          <div class="form-group">
+            <label for="old-pass">বর্তমান পাসওয়ার্ড *</label>
+            <input type="password" id="old-pass" class="form-control" placeholder="বর্তমান পাসওয়ার্ড" required>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="new-pass">নতুন পাসওয়ার্ড *</label>
+              <input type="password" id="new-pass" class="form-control" placeholder="নতুন পাসওয়ার্ড" required>
+            </div>
+            <div class="form-group">
+              <label for="confirm-pass">পুনরায় লিখুন *</label>
+              <input type="password" id="confirm-pass" class="form-control" placeholder="নিশ্চিত করুন" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">পাসওয়ার্ড পরিবর্তন করুন</button>
+        </form>
+
+        <!-- Firebase Configuration Section -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+          <i class="fa-solid fa-fire" style="color: #ea580c;"></i> ফায়ারবেস ক্লাউড কনফিগারেশন (API Keys)
+        </h4>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+          গিটহাবে হোস্ট করার পর আপনি বা যে কেউ চাইলে নিজের ফায়ারবেস ক্লাউড কানেক্ট করতে পারেন:
+        </p>
+        <form id="form-firebase-config">
+          <div class="form-group">
+            <label for="cfg-api-key">API Key</label>
+            <input type="text" id="cfg-api-key" class="form-control" placeholder="AIzaSy...">
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cfg-project-id">Project ID</label>
+              <input type="text" id="cfg-project-id" class="form-control" placeholder="tiles-work-tracer">
+            </div>
+            <div class="form-group">
+              <label for="cfg-auth-domain">Auth Domain</label>
+              <input type="text" id="cfg-auth-domain" class="form-control" placeholder="tiles-work-tracer.firebaseapp.com">
+            </div>
+            <div class="form-group">
+              <label for="cfg-storage-bucket">Storage Bucket</label>
+              <input type="text" id="cfg-storage-bucket" class="form-control" placeholder="tiles-work-tracer.firebasestorage.app">
+            </div>
+            <div class="form-group">
+              <label for="cfg-sender-id">Messaging Sender ID</label>
+              <input type="text" id="cfg-sender-id" class="form-control" placeholder="1042216202116">
+            </div>
+            <div class="form-group col-span-2">
+              <label for="cfg-app-id">App ID</label>
+              <input type="text" id="cfg-app-id" class="form-control" placeholder="1:1042216202116:web:...">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> ফায়ারবেস আপডেট ও কানেক্ট করুন
+          </button>
+        </form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-modal-btn">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- Application Modular Scripts -->
+  <script src="js/firebase.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/actions.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
