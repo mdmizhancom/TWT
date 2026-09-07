@@ -237,49 +237,58 @@
           
           <!-- Filter Controls -->
           <div class="filter-bar">
-            <div class="search-input-wrap">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="filter-search" class="form-control" placeholder="নাম, বিল্ডিং বা কাজের বিবরণ দিয়ে খুঁজুন...">
+            <div class="filter-top-row">
+              <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="filter-search" class="form-control" placeholder="নাম, বিল্ডিং বা কাজের বিবরণ দিয়ে খুঁজুন...">
+              </div>
+              <button id="btn-toggle-filters" type="button" class="btn btn-secondary filter-toggle-btn" title="ফিল্টার মেনু">
+                <i class="fa-solid fa-sliders"></i> <span class="filter-btn-label">ফিল্টার</span>
+              </button>
             </div>
 
-            <div class="filter-group">
-              <label><i class="fa-solid fa-building"></i> বিল্ডিং / সাইট</label>
-              <select id="filter-site" class="form-select filter-select select-site-options">
-                <option value="all">সব বিল্ডিং / অল প্রজেক্ট</option>
-              </select>
-            </div>
+            <div id="filter-collapse-content" class="filter-collapse-content">
+              <div class="filter-group">
+                <label><i class="fa-solid fa-building"></i> বিল্ডিং / সাইট</label>
+                <select id="filter-site" class="form-select filter-select select-site-options">
+                  <option value="all">সব বিল্ডিং / অল প্রজেক্ট</option>
+                </select>
+              </div>
 
-            <div class="filter-group">
-              <label><i class="fa-solid fa-user"></i> কারিগর / শ্রমিক</label>
-              <select id="filter-worker" class="form-select filter-select select-worker-options">
-                <option value="all">সকল কারিগর / শ্রমিক</option>
-              </select>
-            </div>
+              <div class="filter-group">
+                <label><i class="fa-solid fa-user"></i> কারিগর / শ্রমিক</label>
+                <select id="filter-worker" class="form-select filter-select select-worker-options">
+                  <option value="all">সকল কারিগর / শ্রমিক</option>
+                </select>
+              </div>
 
-            <div class="filter-group">
-              <label><i class="fa-solid fa-tag"></i> পদবি / রোল</label>
-              <select id="filter-role" class="form-select filter-select">
-                <option value="all">সকল পদবি (All Roles)</option>
-                <option value="মেস্তুরি">মেস্তুরি (Mistri)</option>
-                <option value="কাটার">টাইলস কাটার (Cutter)</option>
-                <option value="হেল্পার">হেল্পার (Helper)</option>
-                <option value="লেবার">সাধারণ লেবার (Labor)</option>
-              </select>
-            </div>
+              <div class="filter-group">
+                <label><i class="fa-solid fa-tag"></i> পদবি / রোল</label>
+                <select id="filter-role" class="form-select filter-select">
+                  <option value="all">সকল পদবি (All Roles)</option>
+                  <option value="মেস্তুরি">মেস্তুরি (Mistri)</option>
+                  <option value="কাটার">টাইলস কাটার (Cutter)</option>
+                  <option value="হেল্পার">হেল্পার (Helper)</option>
+                  <option value="লেবার">সাধারণ লেবার (Labor)</option>
+                </select>
+              </div>
 
-            <div class="filter-group" style="max-width: 140px;">
-              <label><i class="fa-solid fa-calendar"></i> শুরুর তারিখ</label>
-              <input type="date" id="filter-start-date" class="form-control">
-            </div>
+              <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> শুরুর তারিখ</label>
+                <input type="date" id="filter-start-date" class="form-control">
+              </div>
 
-            <div class="filter-group" style="max-width: 140px;">
-              <label><i class="fa-solid fa-calendar"></i> শেষ তারিখ</label>
-              <input type="date" id="filter-end-date" class="form-control">
-            </div>
+              <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> শেষ তারিখ</label>
+                <input type="date" id="filter-end-date" class="form-control">
+              </div>
 
-            <button id="btn-reset-filters" class="btn btn-secondary" title="ফিল্টার রিসেট করুন" style="height: 40px;">
-              <i class="fa-solid fa-arrow-rotate-left"></i> রিসেট
-            </button>
+              <div class="filter-group reset-grp">
+                <button id="btn-reset-filters" type="button" class="btn btn-secondary" title="ফিল্টার রিসেট করুন">
+                  <i class="fa-solid fa-arrow-rotate-left"></i> রিসেট ফিল্টার
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Filtered Work Logs Table -->
@@ -413,9 +422,9 @@
 
   <!-- ================= MODALS ================= -->
 
-  <!-- Modal 1: Work Log Entry -->
+  <!-- Modal 1: Work Log Entry (Multi-Worker Attendance Supported) -->
   <div id="modal-work-log" class="modal-overlay">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width: 620px;">
       <div class="modal-header">
         <h3 id="modal-log-title">দৈনিক হাজিরা / মজুরি / কাজের এন্ট্রি</h3>
         <button class="close-btn close-modal-btn">&times;</button>
@@ -423,55 +432,39 @@
       <form id="form-work-log">
         <input type="hidden" id="log-id">
         <div class="modal-body">
-          <div class="form-grid">
+          <!-- Shared Date and Building for the Entry -->
+          <div class="form-grid" style="margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1.5px solid var(--border);">
             <div class="form-group">
               <label for="log-date">তারিখ (Date)</label>
               <input type="date" id="log-date" class="form-control default-today">
             </div>
             <div class="form-group">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label for="log-site-select" style="margin-bottom: 0;">বিল্ডিং / সাইট</label>
+                <label for="log-site-select" style="margin-bottom: 0;">ডিফল্ট বিল্ডিং (ঐচ্ছিক)</label>
                 <a href="javascript:void(0)" id="link-quick-add-site" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন বিল্ডিং</a>
               </div>
               <select id="log-site-select" class="form-select select-site-options">
-                <option value="" disabled selected>বিল্ডিং নির্বাচন করুন...</option>
+                <option value="" selected>🏢 সাধারণ সাইট বা ডিফল্ট বিল্ডিং...</option>
               </select>
-            </div>
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label for="log-worker-select" style="margin-bottom: 0;">শ্রমিক / কারিগর</label>
-                <a href="javascript:void(0)" id="link-quick-add-worker" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন কারিগর</a>
-              </div>
-              <select id="log-worker-select" class="form-select select-worker-options">
-                <option value="" disabled selected>শ্রমিক নির্বাচন করুন...</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="log-role-select">পদবি / ধরন</label>
-              <select id="log-role-select" class="form-select">
-                <option value="মেস্তুরি">মেস্তুরি (Head Mistri)</option>
-                <option value="কাটার">টাইলস কাটার (Tile Cutter)</option>
-                <option value="হেল্পার">হেল্পার (Helper)</option>
-                <option value="লেবার">সাধারণ লেবার (Labor)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="log-wage-input">মজুরি বাবদ টাকা (ঐচ্ছিক)</label>
-              <input type="number" id="log-wage-input" class="form-control" placeholder="যেমন: ১০০০" min="0">
-            </div>
-            <div class="form-group">
-              <label for="log-advance-input">অগ্রিম টাকা গ্রহণ (ঐচ্ছিক)</label>
-              <input type="number" id="log-advance-input" class="form-control" placeholder="০ বা গৃহীত টাকা" min="0">
-            </div>
-            <div class="form-group col-span-2">
-              <label for="log-sqft-input">টাইলস কাজের পরিমাণ (SqFt) (ঐচ্ছিক)</label>
-              <input type="number" id="log-sqft-input" class="form-control" placeholder="যেমন: ১৫০ (ঐচ্ছিক)" min="0" step="any">
-            </div>
-            <div class="form-group col-span-2">
-              <label for="log-remarks-input">কাজের বিবরণ / মন্তব্য / নোট</label>
-              <input type="text" id="log-remarks-input" class="form-control" placeholder="যেমন: ৫ তলার বাথরুম কাজ অথবা পুরনো মজুরি পরিশোধ">
             </div>
           </div>
+
+          <!-- Multiple Worker Rows Section Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i> কারিগর ও কাজের তথ্য
+            </h4>
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <a href="javascript:void(0)" id="link-quick-add-worker" class="admin-only" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ নতুন কারিগর</a>
+              <button type="button" id="btn-add-worker-row" class="btn btn-secondary btn-sm" style="font-size: 0.775rem;">
+                <i class="fa-solid fa-plus"></i> আরও শ্রমিক যোগ
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Container for 1 or more Worker Rows -->
+          <div id="worker-rows-container"></div>
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary close-modal-btn">বাতিল</button>

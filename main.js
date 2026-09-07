@@ -55,11 +55,89 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("form-worker")?.addEventListener("submit", Actions.saveWorker);
   document.getElementById("form-expense")?.addEventListener("submit", Actions.saveExpense);
 
-  const openLog = () => { document.getElementById("form-work-log").reset(); Render.dropdowns(); document.getElementById("log-id").value = ""; document.getElementById("log-date").value = today; document.getElementById("log-wage-input").value = ""; document.getElementById("log-advance-input").value = ""; document.getElementById("log-sqft-input").value = ""; document.getElementById("log-remarks-input").value = ""; Actions.openModal("modal-work-log"); };
+  const addWorkerRow = (data = {}) => {
+    const c = document.getElementById("worker-rows-container");
+    if (!c) return;
+    const topSiteVal = document.getElementById("log-site-select")?.value || "";
+    const rowSiteId = data.site_id !== undefined ? data.site_id : topSiteVal;
+    const sOpts = AppState.sites.map(s => `<option value="${s.id}" data-name="${s.name}" ${rowSiteId === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+    const siteHtml = AppState.sites.length ? `<option value="" ${!rowSiteId ? 'selected' : ''}>🏢 সাধারণ সাইট</option>` + sOpts : '<option value="" selected>সাধারণ সাইট</option>';
+    const wOpts = AppState.workers.map(w => `<option value="${w.id}" data-name="${w.name}" data-rate="${w.daily_rate}" data-role="${w.role}" ${data.worker_id === w.id ? 'selected' : ''}>${w.name} [${w.role}] - ৳${w.daily_rate || 0}/দিন</option>`).join('');
+    const workerHtml = AppState.workers.length ? `<option value="" disabled ${!data.worker_id ? 'selected' : ''}>👤 শ্রমিক নির্বাচন করুন...</option>` + wOpts : '<option value="" disabled selected>⚠️ কোনো কারিগর যুক্ত নেই</option>';
+    const div = document.createElement("div");
+    div.className = "worker-entry-row";
+    const initRole = data.role || (data.worker_id ? (AppState.workers.find(w => w.id === data.worker_id)?.role || '') : '');
+    const badgeCls = initRole === 'কাটার' ? 'tag-cutter' : initRole === 'হেল্পার' ? 'tag-helper' : initRole === 'লেবার' ? 'tag-labor' : 'tag-mistri';
+    div.innerHTML = `
+      <div class="worker-row-top">
+        <div class="worker-row-badge-wrap">
+          <span class="worker-row-num"><i class="fa-solid fa-user-check"></i> শ্রমিক #${c.children.length + 1}</span>
+          <span class="row-role-tag tag-badge ${badgeCls}" style="${initRole ? '' : 'display:none;'}">${initRole}</span>
+        </div>
+        <button type="button" class="btn-remove-worker-row" title="এই শ্রমিক বাদ দিন"><i class="fa-solid fa-trash-can"></i> বাদ দিন</button>
+      </div>
+      <div class="worker-inputs-grid">
+        <div class="form-group worker-field-site">
+          <label>বিল্ডিং / সাইট</label>
+          <select class="form-select row-site-select">${siteHtml}</select>
+        </div>
+        <div class="form-group worker-field-main">
+          <label>শ্রমিক / কারিগর</label>
+          <select class="form-select row-worker-select">${workerHtml}</select>
+        </div>
+        <div class="form-group">
+          <label>মজুরি বাবদ টাকা (৳)</label>
+          <input type="number" class="form-control row-wage-input" placeholder="যেমন: ১০০০" value="${data.wage_amount !== undefined ? data.wage_amount : ''}" min="0">
+        </div>
+        <div class="form-group">
+          <label>অগ্রিম গ্রহণ (৳)</label>
+          <input type="number" class="form-control row-advance-input" placeholder="০" value="${data.advance_paid || ''}" min="0">
+        </div>
+      </div>
+      <div class="worker-inputs-subgrid">
+        <div class="form-group">
+          <label>টাইলস কাজ SqFt (ঐচ্ছিক)</label>
+          <input type="number" class="form-control row-sqft-input" placeholder="যেমন: ১৫০" value="${data.work_sqft || ''}" min="0" step="any">
+        </div>
+        <div class="form-group">
+          <label>কাজের বিবরণ / নোট (ঐচ্ছিক)</label>
+          <input type="text" class="form-control row-remarks-input" placeholder="যেমন: বাথরুম টাইলস বা মন্তব্য" value="${data.remarks || ''}">
+        </div>
+      </div>`;
+    div.querySelector(".row-worker-select").addEventListener("change", e => {
+      const opt = e.target.options[e.target.selectedIndex];
+      if (opt && opt.value) {
+        div.querySelector(".row-wage-input").value = opt.getAttribute("data-rate") || "";
+        const r = opt.getAttribute("data-role") || "মেস্তুরি";
+        const tag = div.querySelector(".row-role-tag");
+        tag.textContent = r;
+        tag.className = `row-role-tag tag-badge ${r === 'কাটার' ? 'tag-cutter' : r === 'হেল্পার' ? 'tag-helper' : r === 'লেবার' ? 'tag-labor' : 'tag-mistri'}`;
+        tag.style.display = "inline-flex";
+      }
+    });
+    div.querySelector(".btn-remove-worker-row").addEventListener("click", () => {
+      if (c.children.length > 1) {
+        div.remove();
+        Array.from(c.children).forEach((r, idx) => { r.querySelector('.worker-row-num').innerHTML = `<i class="fa-solid fa-user-check"></i> শ্রমিক #${idx + 1}`; });
+      } else Actions.toast("কমপক্ষে একজন শ্রমিক থাকতে হবে", "info");
+    });
+    c.appendChild(div);
+  };
+
+  const openLog = () => { document.getElementById("form-work-log").reset(); Render.dropdowns(); document.getElementById("log-id").value = ""; document.getElementById("log-date").value = today; document.getElementById("modal-log-title").textContent = "দৈনিক হাজিরা / মজুরি / কাজের এন্ট্রি"; document.getElementById("btn-add-worker-row").style.display = "inline-flex"; document.getElementById("worker-rows-container").innerHTML = ""; addWorkerRow(); Actions.openModal("modal-work-log"); };
   const openSite = () => { document.getElementById("form-site").reset(); document.getElementById("site-id").value = ""; Actions.openModal("modal-site"); };
   const openWorker = () => { document.getElementById("form-worker").reset(); document.getElementById("worker-id").value = ""; Actions.openModal("modal-worker"); };
   const openExp = () => { document.getElementById("form-expense").reset(); Render.dropdowns(); document.getElementById("expense-id").value = ""; document.getElementById("expense-date").value = today; document.getElementById("expense-amount").value = ""; document.getElementById("expense-note").value = ""; Actions.openModal("modal-expense"); };
 
+  document.getElementById("btn-add-worker-row")?.addEventListener("click", () => {
+    addWorkerRow();
+    const mb = document.querySelector("#modal-work-log .modal-body");
+    if (mb) mb.scrollTop = mb.scrollHeight;
+  });
+  document.getElementById("log-site-select")?.addEventListener("change", e => {
+    const val = e.target.value;
+    document.querySelectorAll(".row-site-select").forEach(sel => { if (!sel.value) sel.value = val; });
+  });
   document.getElementById("btn-topbar-action")?.addEventListener("click", () => {
     if (AppState.activeTab === "sites") openSite(); else if (AppState.activeTab === "workers") openWorker();
     else if (AppState.activeTab === "expenses") openExp(); else if (AppState.activeTab === "reports") window.print(); else openLog();
@@ -71,11 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("link-quick-add-site")?.addEventListener("click", () => { Actions.closeModal("modal-work-log"); openSite(); });
   document.getElementById("link-quick-add-worker")?.addEventListener("click", () => { Actions.closeModal("modal-work-log"); openWorker(); });
   document.getElementById("link-quick-add-site-exp")?.addEventListener("click", () => { Actions.closeModal("modal-expense"); openSite(); });
-
-  document.getElementById("log-worker-select")?.addEventListener("change", e => {
-    const opt = e.target.options[e.target.selectedIndex];
-    if (opt && opt.value) { document.getElementById("log-wage-input").value = opt.getAttribute("data-rate") || ""; document.getElementById("log-role-select").value = opt.getAttribute("data-role") || "মেস্তুরি"; }
-  });
 
   // Filters
   const onFilter = () => {
@@ -89,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   document.querySelectorAll("#filter-site, #filter-worker, #filter-role, #filter-start-date, #filter-end-date").forEach(el => el?.addEventListener("change", onFilter));
   document.getElementById("filter-search")?.addEventListener("input", onFilter);
+  document.getElementById("btn-toggle-filters")?.addEventListener("click", () => document.getElementById("filter-collapse-content")?.classList.toggle("open"));
   document.getElementById("btn-reset-filters")?.addEventListener("click", () => {
     document.querySelectorAll(".filter-select").forEach(s => s.value = "all");
     document.getElementById("filter-start-date").value = ""; document.getElementById("filter-end-date").value = ""; document.getElementById("filter-search").value = ""; onFilter();
@@ -99,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profW = e.target.closest(".view-worker-profile-btn"), editL = e.target.closest(".edit-log-btn"), delL = e.target.closest(".delete-log-btn"), editS = e.target.closest(".edit-site-btn"), delS = e.target.closest(".delete-site-btn"), editW = e.target.closest(".edit-worker-btn"), delW = e.target.closest(".delete-worker-btn"), editE = e.target.closest(".edit-expense-btn"), delE = e.target.closest(".delete-expense-btn");
 
     if (profW) { const w = AppState.workers.find(i => i.id === profW.dataset.id); Render.workerProfile(w); Actions.openModal("modal-worker-profile"); }
-    if (editL) { const l = AppState.logs.find(i => i.id === editL.dataset.id); if (l) { Render.dropdowns(); document.getElementById("log-id").value = l.id; document.getElementById("log-date").value = l.date; document.getElementById("log-site-select").value = l.site_id; document.getElementById("log-worker-select").value = l.worker_id; document.getElementById("log-role-select").value = l.role; document.getElementById("log-wage-input").value = l.wage_amount; document.getElementById("log-advance-input").value = l.advance_paid || 0; document.getElementById("log-sqft-input").value = l.work_sqft || 0; document.getElementById("log-remarks-input").value = l.remarks || ""; Actions.openModal("modal-work-log"); } }
+    if (editL) { const l = AppState.logs.find(i => i.id === editL.dataset.id); if (l) { Render.dropdowns(); document.getElementById("log-id").value = l.id; document.getElementById("log-date").value = l.date; document.getElementById("log-site-select").value = l.site_id; document.getElementById("modal-log-title").textContent = "হাজিরা ও মজুরি তথ্য সম্পাদনা"; document.getElementById("btn-add-worker-row").style.display = "none"; const c = document.getElementById("worker-rows-container"); c.innerHTML = ""; addWorkerRow(l); Actions.openModal("modal-work-log"); } }
     if (delL && confirm("মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
     if (editS) { const s = AppState.sites.find(i => i.id === editS.dataset.id); if (s) { document.getElementById("site-id").value = s.id; document.getElementById("site-name").value = s.name; document.getElementById("site-location").value = s.location || ""; document.getElementById("site-status").value = s.status || "active"; Actions.openModal("modal-site"); } }
     if (delS && confirm("মুছে ফেলতে চান?")) { await DB.remove("sites", delS.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }

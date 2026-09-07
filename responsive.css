@@ -1,4 +1,15 @@
-/* Responsive and Print Styles */
+/* Responsive and Print Styles for Tiles Works Tracer */
+
+/* Universal Overflow & Box-Sizing Protection */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
 
 /* Mobile Bottom Navigation */
 .mobile-bottom-nav {
@@ -12,7 +23,7 @@
   z-index: 50;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   justify-content: space-around;
-  padding: 0.5rem 0.25rem calc(0.5rem + env(safe-area-inset-bottom));
+  padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom));
 }
 
 .mobile-nav-btn {
@@ -32,7 +43,7 @@
 }
 
 .mobile-nav-btn i {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
 }
 
 .mobile-nav-btn.active {
@@ -40,7 +51,26 @@
   font-weight: 700;
 }
 
-/* Tablet & Mobile Screens */
+/* Desktop Defaults for Filter Elements */
+.filter-top-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 2;
+  min-width: 220px;
+}
+.filter-toggle-btn {
+  display: none;
+}
+.filter-collapse-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.85rem;
+  flex: 3;
+}
+
+/* Tablet Screens (<= 992px) */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
@@ -54,10 +84,7 @@
   .sidebar-backdrop {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(15, 23, 42, 0.5);
     z-index: 39;
   }
@@ -68,66 +95,255 @@
 
   .main-wrapper {
     margin-left: 0;
+    max-width: 100vw;
   }
 
   .mobile-menu-btn {
     display: block;
   }
-
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
+/* Mobile Screens (<= 768px) */
 @media (max-width: 768px) {
+  .app-container, .main-wrapper, .page-content {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .top-header {
-    padding: 0 1rem;
-    height: 60px;
+    padding: 0 0.85rem;
+    height: 56px;
+    gap: 0.5rem;
   }
 
-  .page-content {
-    padding: 1rem 0.85rem calc(4.5rem + env(safe-area-inset-bottom));
+  .header-left {
+    min-width: 0;
+    flex: 1;
+    gap: 0.5rem;
   }
 
-  .mobile-bottom-nav {
-    display: flex;
+  .page-title {
+    min-width: 0;
   }
 
   .page-title h2 {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .page-title p {
     display: none;
   }
 
+  .header-right {
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .header-right .btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.775rem;
+    height: 32px;
+    gap: 0.3rem;
+  }
+
+  .page-content {
+    padding: 0.85rem 0.75rem calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  /* Stats Grid */
   .stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
   }
 
   .stat-card {
-    padding: 1rem;
-    gap: 0.75rem;
+    padding: 0.85rem 0.75rem;
+    gap: 0.6rem;
   }
 
   .stat-icon-wrapper {
-    width: 42px;
-    height: 42px;
-    font-size: 1.2rem;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+
+  .stat-info h3 {
+    font-size: 0.68rem;
+    margin-bottom: 0.15rem;
   }
 
   .stat-info .stat-value {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
+  .stat-info .stat-sub {
+    font-size: 0.68rem;
+  }
+
+  /* Quick Actions Bar */
+  .quick-actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .quick-actions-bar .btn {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.35rem;
+    text-align: center;
+    justify-content: center;
+    white-space: normal;
+    line-height: 1.2;
+    height: auto;
+    min-height: 38px;
+  }
+
+  /* Filter Bar Mobile Styling */
   .filter-bar {
-    padding: 0.85rem;
-    gap: 0.65rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .filter-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .filter-collapse-content {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .filter-collapse-content.open {
+    display: grid;
   }
 
   .filter-group {
-    min-width: 100%;
+    min-width: 0;
+    flex: unset;
+  }
+
+  .filter-group.reset-grp {
+    grid-column: span 2;
+  }
+
+  .filter-group.reset-grp button {
+    width: 100%;
+    height: 38px;
+  }
+
+  /* Responsive Mobile Cards for ALL Tables (Zero Horizontal Scroll!) */
+  .table-responsive {
+    overflow-x: visible !important;
+    width: 100% !important;
+  }
+
+  .custom-table {
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+  }
+
+  .custom-table thead {
+    display: none !important;
+  }
+
+  .custom-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .custom-table tbody tr {
+    display: block !important;
+    background: #ffffff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 0.85rem !important;
+    box-shadow: var(--shadow-sm) !important;
+    box-sizing: border-box !important;
+  }
+
+  .custom-table td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.35rem 0 !important;
+    border-bottom: 1px dashed #e2e8f0 !important;
+    font-size: 0.85rem !important;
+    word-break: break-word !important;
+  }
+
+  .custom-table td:last-child {
+    border-bottom: none !important;
+    padding-top: 0.5rem !important;
+    margin-top: 0.25rem !important;
+    border-top: 1px solid #e2e8f0 !important;
+  }
+
+  .custom-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.725rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Cards Grid on Mobile */
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .modal-box {
+    max-height: 94vh;
+    border-radius: var(--radius-md);
+  }
+
+  .modal-header, .modal-body, .modal-footer {
+    padding: 0.85rem;
   }
 
   .form-grid {
@@ -139,36 +355,47 @@
     grid-column: span 1;
   }
 
-  .modal-box {
-    max-height: 95vh;
+  .worker-inputs-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 
-  .modal-header, .modal-body, .modal-footer {
-    padding: 1rem;
+  .worker-field-site,
+  .worker-field-main {
+    grid-column: span 2;
+  }
+
+  .worker-inputs-subgrid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 
   .card-header {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
   }
 
   .card-body {
-    padding: 1rem;
+    padding: 0.85rem;
   }
 }
 
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+/* Smallest Mobile Screens (<= 420px) */
+@media (max-width: 420px) {
+  .top-header {
+    padding: 0 0.5rem;
   }
 
-  .header-right .btn-text-hide span {
-    display: none;
+  .header-left {
+    gap: 0.35rem;
   }
 
-  .header-right .btn-text-hide {
-    padding: 0.5rem;
-    min-width: 36px;
-    justify-content: center;
+  .page-title h2 {
+    font-size: 0.85rem;
+  }
+
+  .header-right .btn {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.725rem;
   }
 }
 
@@ -214,13 +441,31 @@
   }
 
   .custom-table {
-    border: 1px solid #000;
+    border: 1px solid #000 !important;
+    display: table !important;
+  }
+
+  .custom-table thead {
+    display: table-header-group !important;
+  }
+
+  .custom-table tbody {
+    display: table-row-group !important;
+  }
+
+  .custom-table tr {
+    display: table-row !important;
   }
 
   .custom-table th, .custom-table td {
+    display: table-cell !important;
     border: 1px solid #ccc !important;
     padding: 6px 8px !important;
     font-size: 11px !important;
+  }
+
+  .custom-table td::before {
+    display: none !important;
   }
 }
 

@@ -15,24 +15,35 @@ const Actions = {
 
   async saveLog(e) {
     e.preventDefault();
-    const id = document.getElementById("log-id").value;
-    const sSel = document.getElementById("log-site-select"), wSel = document.getElementById("log-worker-select");
+    const id = document.getElementById("log-id").value, topSite = document.getElementById("log-site-select");
     const date = document.getElementById("log-date").value || new Date().toISOString().split("T")[0];
-    const wage = +document.getElementById("log-wage-input").value || 0;
-    const adv = +document.getElementById("log-advance-input").value || 0;
-    const sqft = +document.getElementById("log-sqft-input").value || 0;
-    const remarks = document.getElementById("log-remarks-input").value.trim();
-    const role = document.getElementById("log-role-select").value || "মেস্তুরি";
-    const sId = sSel.value || "", sName = sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || (sId ? "বিল্ডিং" : "সাধারণ সাইট");
-    const wId = wSel.value || "", wName = wSel.options[wSel.selectedIndex]?.getAttribute("data-name") || (wId ? "কর্মী" : "অনির্দিষ্ট কর্মী");
+    const topSId = topSite?.value || "", topSName = topSite?.options[topSite.selectedIndex]?.getAttribute("data-name") || (topSId ? "বিল্ডিং" : "সাধারণ সাইট");
 
-    if (!sId && !wId && !wage && !adv && !sqft && !remarks) {
-      return Actions.toast("কমপক্ষে যেকোনো একটি তথ্য লিখুন বা সিলেক্ট করুন!", "warning");
+    const rows = document.querySelectorAll(".worker-entry-row");
+    if (!rows.length) {
+      const emptyData = { date, site_id: topSId, site_name: topSName, worker_name: "কর্মী", role: "মেস্তুরি" };
+      if (id) await DB.update("work_logs", id, emptyData); else await DB.add("work_logs", emptyData);
+      Actions.closeModal("modal-work-log"); return Actions.toast("তারিখ তথ্য সংরক্ষিত হয়েছে!");
     }
 
-    const data = { date, site_id: sId, site_name: sName, worker_id: wId, worker_name: wName, role, wage_amount: wage, advance_paid: adv, work_sqft: sqft, remarks };
-    if (id) await DB.update("work_logs", id, data); else await DB.add("work_logs", data);
-    Actions.closeModal("modal-work-log"); Actions.toast("হাজিরা ও মজুরি তথ্য সংরক্ষিত হয়েছে!");
+    let savedCount = 0;
+    for (const row of rows) {
+      const rSite = row.querySelector(".row-site-select"), wSel = row.querySelector(".row-worker-select");
+      const sId = (rSite && rSite.value) ? rSite.value : topSId;
+      const sName = (rSite && rSite.value && rSite.selectedIndex >= 0) ? (rSite.options[rSite.selectedIndex]?.getAttribute("data-name") || (sId ? "বিল্ডিং" : "সাধারণ সাইট")) : topSName;
+      const wId = wSel?.value || "";
+      const wName = (wSel && wSel.selectedIndex >= 0) ? (wSel.options[wSel.selectedIndex]?.getAttribute("data-name") || (wId ? "কর্মী" : "অনির্দিষ্ট কর্মী")) : (wId ? "কর্মী" : "অনির্দিষ্ট কর্মী");
+      const role = (wSel && wSel.selectedIndex >= 0) ? (wSel.options[wSel.selectedIndex]?.getAttribute("data-role") || AppState.workers.find(w => w.id === wId)?.role || "মেস্তুরি") : "মেস্তুরি";
+      const wage = +row.querySelector(".row-wage-input")?.value || 0, adv = +row.querySelector(".row-advance-input")?.value || 0;
+      const sqft = +row.querySelector(".row-sqft-input")?.value || 0, remarks = row.querySelector(".row-remarks-input")?.value.trim() || "";
+
+      const data = { date, site_id: sId, site_name: sName, worker_id: wId, worker_name: wName, role, wage_amount: wage, advance_paid: adv, work_sqft: sqft, remarks };
+      if (id && rows.length === 1) await DB.update("work_logs", id, data); else await DB.add("work_logs", data);
+      savedCount++;
+    }
+
+    Actions.closeModal("modal-work-log");
+    Actions.toast(savedCount > 1 ? `${savedCount} জন শ্রমিকের হাজিরা সফলভাবে সংরক্ষিত হয়েছে!` : "হাজিরা ও কাজের তথ্য সংরক্ষিত হয়েছে!");
   },
 
   async saveSite(e) {

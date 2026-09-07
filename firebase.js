@@ -9,10 +9,12 @@ const DEFAULT_CONFIG = {
 };
 
 let db = null;
-function initFirebase(cfg) {
+async function initFirebase(cfg) {
   try {
     if (window.firebase && cfg && cfg.apiKey) {
-      if (firebase.apps.length) firebase.app().delete();
+      if (firebase.apps.length) {
+        await Promise.all(firebase.apps.map(app => app.delete()));
+      }
       firebase.initializeApp(cfg);
       db = firebase.firestore();
     }
