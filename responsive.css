@@ -760,8 +760,8 @@ html, body {
     background: transparent !important;
   }
 
-  .custom-table td::before {
-    display: none !important;
+  .print-signatures {
+    display: flex !important;
   }
 }
 

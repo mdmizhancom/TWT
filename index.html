@@ -768,7 +768,7 @@
         <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
           গিটহাবে হোস্ট করার পর আপনি বা যে কেউ চাইলে নিজের ফায়ারবেস ক্লাউড কানেক্ট করতে পারেন:
         </p>
-        <form id="form-firebase-config">
+        <form id="form-firebase-config" style="margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem;">
           <div class="form-group">
             <label for="cfg-api-key">API Key</label>
             <input type="text" id="cfg-api-key" class="form-control" placeholder="AIzaSy...">
@@ -799,6 +799,23 @@
             <i class="fa-solid fa-cloud-arrow-up"></i> ফায়ারবেস আপডেট ও কানেক্ট করুন
           </button>
         </form>
+
+        <!-- Data Backup & Restore Section -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">
+          <i class="fa-solid fa-database" style="color: var(--primary);"></i> সম্পূর্ণ ডাটা ব্যাকআপ ও রিস্টোর
+        </h4>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+          আপনার সমস্ত বিল্ডিং, কারিগর, হাজিরা ও খরচের ব্যাকআপ JSON ফাইলে সংরক্ষণ করুন বা রিস্টোর করুন:
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <button type="button" id="btn-export-backup" class="btn btn-secondary btn-sm" style="width: 100%;">
+            <i class="fa-solid fa-download"></i> ব্যাকআপ ডাউনলোড
+          </button>
+          <label class="btn btn-secondary btn-sm" style="width: 100%; margin: 0; cursor: pointer; text-align: center;">
+            <i class="fa-solid fa-upload"></i> ব্যাকআপ রিস্টোর
+            <input type="file" id="input-import-backup" accept=".json" style="display: none;">
+          </label>
+        </div>
 
       </div>
       <div class="modal-footer">

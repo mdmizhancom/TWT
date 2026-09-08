@@ -9,14 +9,41 @@ const DEFAULT_CONFIG = {
 };
 
 let db = null;
+let _firestoreUnsubscribers = [];
+
 async function initFirebase(cfg) {
   try {
+    // Clean existing snapshot listeners
+    _firestoreUnsubscribers.forEach(unsub => {
+      try { if (typeof unsub === "function") unsub(); } catch (e) {}
+    });
+    _firestoreUnsubscribers = [];
+
     if (window.firebase && cfg && cfg.apiKey) {
       if (firebase.apps.length) {
         await Promise.all(firebase.apps.map(app => app.delete()));
       }
       firebase.initializeApp(cfg);
       db = firebase.firestore();
+      
+      // Re-attach active listeners if DB was already listening
+      if (window.DB && window.DB._listeners) {
+        Object.keys(window.DB._listeners).forEach(col => {
+          try {
+            const unsub = db.collection(col).onSnapshot(snap => {
+              const list = [];
+              snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+              try { localStorage.setItem("twt_" + col, JSON.stringify(list)); } catch (e) {}
+              if (window.DB._listeners[col]) {
+                window.DB._listeners[col].forEach(cb => {
+                  try { cb(list); } catch (err) { console.error("Listener error:", err); }
+                });
+              }
+            }, err => console.warn(col + " listen:", err));
+            _firestoreUnsubscribers.push(unsub);
+          } catch (err) {}
+        });
+      }
     }
   } catch (e) { console.warn("Firebase Init:", e.message); }
 }
@@ -30,9 +57,9 @@ const DB = {
     const c = localStorage.getItem("twt_firebase_config");
     return c ? JSON.parse(c) : DEFAULT_CONFIG;
   },
-  saveConfig(cfg) {
+  async saveConfig(cfg) {
     localStorage.setItem("twt_firebase_config", JSON.stringify(cfg));
-    initFirebase(cfg);
+    await initFirebase(cfg);
   },
   get(k) {
     try { const d = localStorage.getItem("twt_" + k); return d ? JSON.parse(d) : []; }
@@ -52,12 +79,13 @@ const DB = {
     cb(this.get(col));
     if (db) {
       try {
-        db.collection(col).onSnapshot(snap => {
+        const unsub = db.collection(col).onSnapshot(snap => {
           const list = [];
           snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
           try { localStorage.setItem("twt_" + col, JSON.stringify(list)); } catch (e) {}
           cb(list);
         }, err => console.warn(col + " listen:", err));
+        _firestoreUnsubscribers.push(unsub);
       } catch (err) {}
     }
   },
@@ -66,7 +94,7 @@ const DB = {
     if (db) {
       try { const ref = await db.collection(col).add(item); item.id = ref.id; } catch (e) {}
     }
-    if (!item.id) item.id = "id_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+    if (!item.id) item.id = "id_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
     const list = this.get(col);
     list.unshift(item);
     this.save(col, list);

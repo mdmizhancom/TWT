@@ -57,6 +57,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-open-settings")?.addEventListener("click", () => { Render.settings(); Actions.openModal("modal-settings"); });
   document.getElementById("form-firebase-config")?.addEventListener("submit", Actions.saveFirebaseConfig);
   document.getElementById("form-change-password")?.addEventListener("submit", Actions.changePassword);
+  document.getElementById("btn-export-backup")?.addEventListener("click", Actions.exportBackup);
+  document.getElementById("input-import-backup")?.addEventListener("change", Actions.importBackup);
+
+  // Close modals on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".modal-overlay.active").forEach(m => m.classList.remove("active"));
+    }
+  });
 
   // Modals & Form Handlers
   document.querySelectorAll(".close-modal-btn").forEach(b => b.addEventListener("click", e => e.target.closest(".modal-overlay").classList.remove("active")));
@@ -70,9 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const c = document.getElementById("worker-rows-container");
     if (!c) return;
     const rowSiteId = data.site_id !== undefined ? data.site_id : "";
-    const sOpts = AppState.sites.map(s => `<option value="${s.id}" data-name="${s.name}" ${rowSiteId === s.id ? 'selected' : ''}>🏢 ${s.name}</option>`).join('');
+    const sOpts = AppState.sites.map(s => `<option value="${escapeHTML(s.id)}" data-name="${escapeHTML(s.name)}" ${rowSiteId === s.id ? 'selected' : ''}>🏢 ${escapeHTML(s.name)}</option>`).join('');
     const siteHtml = `<option value="" ${!rowSiteId ? 'selected' : ''}>🚫 কোনো কাজ নেই (শুধু জমা / পেমেন্ট)</option>` + sOpts;
-    const wOpts = AppState.workers.map(w => `<option value="${w.id}" data-name="${w.name}" data-rate="${w.daily_rate}" data-role="${w.role}" ${data.worker_id === w.id ? 'selected' : ''}>${w.name} [${w.role}] - ৳${w.daily_rate || 0}/দিন</option>`).join('');
+    const wOpts = AppState.workers.map(w => `<option value="${escapeHTML(w.id)}" data-name="${escapeHTML(w.name)}" data-rate="${w.daily_rate || 0}" data-role="${escapeHTML(w.role || 'মেস্তুরি')}" ${data.worker_id === w.id ? 'selected' : ''}>${escapeHTML(w.name)} [${escapeHTML(w.role || 'মেস্তুরি')}] - ৳${w.daily_rate || 0}/দিন</option>`).join('');
     const workerHtml = AppState.workers.length ? `<option value="" disabled ${!data.worker_id ? 'selected' : ''}>👤 শ্রমিক নির্বাচন করুন...</option>` + wOpts : '<option value="" disabled selected>⚠️ কোনো কারিগর যুক্ত নেই</option>';
     
     const div = document.createElement("div");
@@ -87,8 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="worker-row-num"><i class="fa-solid fa-user-check"></i> শ্রমিক #${c.children.length + 1}</span>
           <div class="worker-selected-preview" style="${initWorker ? 'display:inline-flex;' : 'display:none;'}">
             <span class="row-avatar-box">${initWorker ? AppState.getAvatar(initWorker, 'worker-avatar-xs') : ''}</span>
-            <strong class="row-worker-name-display">${initWorker ? initWorker.name : ''}</strong>
-            <span class="row-role-tag tag-badge ${badgeCls}">${initRole || 'মেস্তুরি'}</span>
+            <strong class="row-worker-name-display">${initWorker ? escapeHTML(initWorker.name) : ''}</strong>
+            <span class="row-role-tag tag-badge ${badgeCls}">${escapeHTML(initRole || 'মেস্তুরি')}</span>
           </div>
         </div>
         <button type="button" class="btn-remove-worker-row" title="এই শ্রমিক বাদ দিন"><i class="fa-solid fa-trash-can"></i> বাদ দিন</button>
@@ -118,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="form-group">
           <label>কাজের বিবরণ / নোট (ঐচ্ছিক)</label>
-          <input type="text" class="form-control row-remarks-input" placeholder="যেমন: বাথরুম টাইলস বা মন্তব্য" value="${data.remarks || ''}">
+          <input type="text" class="form-control row-remarks-input" placeholder="যেমন: বাথরুম টাইলস বা মন্তব্য" value="${escapeHTML(data.remarks || '')}">
         </div>
       </div>`;
 
@@ -268,13 +277,13 @@ document.addEventListener("DOMContentLoaded", () => {
         Actions.openModal("modal-work-log"); 
       } 
     }
-    if (delL && confirm("মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
+    if (delL && confirm("আপনি কি নিশ্চিত এই হাজিরার এন্ট্রি মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("হাজিরা এন্ট্রি মুছে ফেলা হয়েছে", "info"); }
     if (editS) { const s = AppState.sites.find(i => i.id === editS.dataset.id); if (s) { document.getElementById("site-id").value = s.id; document.getElementById("site-name").value = s.name; document.getElementById("site-location").value = s.location || ""; document.getElementById("site-status").value = s.status || "active"; Actions.openModal("modal-site"); } }
-    if (delS && confirm("মুছে ফেলতে চান?")) { await DB.remove("sites", delS.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
+    if (delS && confirm("বিল্ডিংটি মুছে ফেলতে চান? (এর সাথে যুক্ত আগের রেকর্ড অক্ষুণ্ন থাকবে)")) { await DB.remove("sites", delS.dataset.id); Actions.toast("বিল্ডিং মুছে ফেলা হয়েছে", "info"); }
     if (editW) { const w = AppState.workers.find(i => i.id === editW.dataset.id); if (w) { document.getElementById("worker-id").value = w.id; document.getElementById("worker-name").value = w.name; document.getElementById("worker-role").value = w.role; document.getElementById("worker-phone").value = w.phone || ""; document.getElementById("worker-rate").value = w.daily_rate || 0; document.getElementById("worker-location").value = w.location || ""; document.getElementById("worker-avatar-url").value = w.avatar_url || ""; Actions.openModal("modal-worker"); } }
-    if (delW && confirm("মুছে ফেলতে চান?")) { await DB.remove("workers", delW.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
+    if (delW && confirm("শ্রমিক প্রোফাইলটি মুছে ফেলতে চান?")) { await DB.remove("workers", delW.dataset.id); Actions.toast("শ্রমিক মুছে ফেলা হয়েছে", "info"); }
     if (editE) { const exp = AppState.expenses.find(i => i.id === editE.dataset.id); if (exp) { Render.dropdowns(); document.getElementById("expense-id").value = exp.id; document.getElementById("expense-date").value = exp.date; document.getElementById("expense-site-select").value = exp.site_id; document.getElementById("expense-category").value = exp.category; document.getElementById("expense-amount").value = exp.amount; document.getElementById("expense-note").value = exp.note || ""; Actions.openModal("modal-expense"); } }
-    if (delE && confirm("মুছে ফেলতে চান?")) { await DB.remove("expenses", delE.dataset.id); Actions.toast("মুছে ফেলা হয়েছে", "info"); }
+    if (delE && confirm("খরচের রেকর্ডটি মুছে ফেলতে চান?")) { await DB.remove("expenses", delE.dataset.id); Actions.toast("খরচ মুছে ফেলা হয়েছে", "info"); }
     if (e.target.closest(".view-site-btn")) { document.getElementById("filter-site").value = e.target.closest(".view-site-btn").dataset.id; onFilter(); switchTab("logs"); }
   });
   document.getElementById("btn-export-csv")?.addEventListener("click", Actions.exportCSV);

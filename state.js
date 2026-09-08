@@ -1,6 +1,36 @@
 // Application State, Avatar Generator & Security Store
 const DEFAULT_PASS = "M~R.88@Mizhan.25";
 
+// HTML Sanitizer Utility to prevent XSS / UI injection attacks
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+window.escapeHTML = escapeHTML;
+
+// Safe URL validator for avatars (prevents javascript: and vbscript: URIs)
+function safeAvatarUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (/^(https?:\/\/|data:image\/)/i.test(trimmed)) {
+    return encodeURI(trimmed);
+  }
+  return "";
+}
+
+// Convert Bengali numerals to English numerals for search & parsing
+function bnToEnDigits(str) {
+  if (!str) return "";
+  const map = { '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9' };
+  return String(str).replace(/[০-৯]/g, d => map[d] || d);
+}
+window.bnToEnDigits = bnToEnDigits;
+
 const AppState = {
   sites: [], workers: [], logs: [], expenses: [],
   isAdmin: localStorage.getItem("twt_admin") === "true",
@@ -34,30 +64,41 @@ const AppState = {
     if (window.Render) window.Render.updateAdmin();
   },
 
-  verifyPassword(p) { return String(p).trim() === String(this.adminPass).trim(); },
-  updatePassword(p) { this.adminPass = String(p).trim(); localStorage.setItem("twt_pass", this.adminPass); },
+  verifyPassword(p) {
+    const input = String(p || "").trim();
+    return input === String(this.adminPass).trim();
+  },
+
+  updatePassword(p) {
+    this.adminPass = String(p).trim();
+    localStorage.setItem("twt_pass", this.adminPass);
+  },
 
   getAvatar(w, cls = "") {
-    if (w && w.avatar_url && w.avatar_url.trim()) {
-      return `<img src="${w.avatar_url}" class="worker-avatar ${cls}" alt="${w.name || 'Worker'}" onerror="this.outerHTML='<div class=\\'worker-avatar ${cls}\\'>${(w.name || 'W').charAt(0)}</div>'">`;
+    const safeUrl = safeAvatarUrl(w && w.avatar_url);
+    const safeName = escapeHTML(w && w.name ? w.name : "Worker");
+    const initial = w && w.name ? escapeHTML(w.name.trim().charAt(0)) : '<i class="fa-solid fa-user"></i>';
+
+    if (safeUrl) {
+      return `<img src="${safeUrl}" class="worker-avatar ${cls}" alt="${safeName}" onerror="this.outerHTML='<div class=\\'worker-avatar ${cls}\\'>${initial}</div>'">`;
     }
-    const initial = w && w.name ? w.name.trim().charAt(0) : '<i class="fa-solid fa-user"></i>';
     return `<div class="worker-avatar ${cls}">${initial}</div>`;
   },
 
   getRoleBadge(role) {
     const r = role || "মেস্তুরি";
-    if (r.includes("কাটার")) return `<span class="tag-badge tag-cutter"><i class="fa-solid fa-scissors"></i> ${r}</span>`;
-    if (r.includes("হেল্পার")) return `<span class="tag-badge tag-helper"><i class="fa-solid fa-hands-holding"></i> ${r}</span>`;
-    if (r.includes("লেবার")) return `<span class="tag-badge tag-labor"><i class="fa-solid fa-person-digging"></i> ${r}</span>`;
-    return `<span class="tag-badge tag-mistri"><i class="fa-solid fa-trowel"></i> ${r}</span>`;
+    const safeR = escapeHTML(r);
+    if (r.includes("কাটার")) return `<span class="tag-badge tag-cutter"><i class="fa-solid fa-scissors"></i> ${safeR}</span>`;
+    if (r.includes("হেল্পার")) return `<span class="tag-badge tag-helper"><i class="fa-solid fa-hands-holding"></i> ${safeR}</span>`;
+    if (r.includes("লেবার")) return `<span class="tag-badge tag-labor"><i class="fa-solid fa-person-digging"></i> ${safeR}</span>`;
+    return `<span class="tag-badge tag-mistri"><i class="fa-solid fa-trowel"></i> ${safeR}</span>`;
   },
 
   parseDateToTime(dStr) {
     if (!dStr) return 0;
     if (typeof dStr === "number") return dStr;
     if (dStr instanceof Date) return dStr.getTime();
-    const s = String(dStr).trim();
+    const s = bnToEnDigits(String(dStr).trim());
     // YYYY-MM-DD or YYYY/MM/DD
     const isoMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
     if (isoMatch) {
@@ -96,6 +137,7 @@ const AppState = {
     const { siteId, workerId, role, startDate, endDate, q } = this.filters;
     const startT = startDate ? this.parseDateToTime(startDate) : null;
     const endT = endDate ? this.parseDateToTime(endDate) : null;
+    const query = q ? bnToEnDigits(q.trim().toLowerCase()) : "";
 
     return this.logs.filter(l => {
       if (siteId !== "all" && l.site_id !== siteId) return false;
@@ -111,9 +153,10 @@ const AppState = {
       if (startT && logT < startT) return false;
       if (endT && logT > endT) return false;
 
-      if (q) {
-        const text = `${l.worker_name || ""} ${l.site_name || ""} ${l.remarks || ""}`.toLowerCase();
-        if (!text.includes(q.toLowerCase())) return false;
+      if (query) {
+        const rawText = `${l.worker_name || ""} ${l.site_name || ""} ${l.remarks || ""} ${l.date || ""}`.toLowerCase();
+        const normalized = bnToEnDigits(rawText);
+        if (!normalized.includes(query) && !rawText.includes(query)) return false;
       }
       return true;
     }).sort((a, b) => {
@@ -130,15 +173,17 @@ const AppState = {
     const { siteId, startDate, endDate, q } = this.filters;
     const startT = startDate ? this.parseDateToTime(startDate) : null;
     const endT = endDate ? this.parseDateToTime(endDate) : null;
+    const query = q ? bnToEnDigits(q.trim().toLowerCase()) : "";
 
     return this.expenses.filter(e => {
       if (siteId !== "all" && e.site_id !== siteId) return false;
       const expT = this.parseDateToTime(e.date);
       if (startT && expT < startT) return false;
       if (endT && expT > endT) return false;
-      if (q) {
-        const text = `${e.site_name || ""} ${e.category || ""} ${e.note || ""}`.toLowerCase();
-        if (!text.includes(q.toLowerCase())) return false;
+      if (query) {
+        const rawText = `${e.site_name || ""} ${e.category || ""} ${e.note || ""} ${e.date || ""}`.toLowerCase();
+        const normalized = bnToEnDigits(rawText);
+        if (!normalized.includes(query) && !rawText.includes(query)) return false;
       }
       return true;
     }).sort((a, b) => {
@@ -178,3 +223,4 @@ const AppState = {
   money(n) { return "৳" + Number(n || 0).toLocaleString("en-IN"); }
 };
 window.AppState = AppState;
+

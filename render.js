@@ -11,8 +11,9 @@ const Render = {
   },
 
   dropdowns() {
-    const sOpts = AppState.sites.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.location || 'সাইট'})</option>`).join('');
-    const wOpts = AppState.workers.map(w => `<option value="${w.id}" data-name="${w.name}" data-rate="${w.daily_rate}" data-role="${w.role}">${w.name} - ${w.role} [৳${w.daily_rate || 0}/দিন]</option>`).join('');
+    const sOpts = AppState.sites.map(s => `<option value="${escapeHTML(s.id)}" data-name="${escapeHTML(s.name)}">${escapeHTML(s.name)} (${escapeHTML(s.location || 'সাইট')})</option>`).join('');
+    const wOpts = AppState.workers.map(w => `<option value="${escapeHTML(w.id)}" data-name="${escapeHTML(w.name)}" data-rate="${w.daily_rate || 0}" data-role="${escapeHTML(w.role || 'মেস্তুরি')}">${escapeHTML(w.name)} - ${escapeHTML(w.role || 'মেস্তুরি')} [৳${w.daily_rate || 0}/দিন]</option>`).join('');
+    
     document.querySelectorAll(".select-site-options").forEach(el => {
       const cur = el.value, isF = el.classList.contains("filter-select");
       el.innerHTML = isF ? `<option value="all">🏢 সব বিল্ডিং / সাইট (${AppState.sites.length})</option>` + sOpts : (AppState.sites.length ? `<option value="" disabled ${!cur ? 'selected' : ''}>🏢 বিল্ডিং নির্বাচন করুন (${AppState.sites.length} টি উপলব্ধ)...</option>` + sOpts : '<option value="" disabled selected>⚠️ কোনো বিল্ডিং যুক্ত নেই (প্রথমে বিল্ডিং যোগ করুন)</option>');
@@ -45,17 +46,20 @@ const Render = {
       const crB = b.created_at ? Date.parse(b.created_at) || 0 : 0;
       return crB - crA;
     }).slice(0, 6);
+    
     document.getElementById("dashboard-recent-logs").innerHTML = rec.length ? `<div class="table-responsive"><table class="custom-table table-worklogs"><thead><tr><th>তারিখ</th><th>শ্রমিক</th><th>বিল্ডিং / স্ট্যাটাস</th><th>মজুরি</th><th>জমা</th><th>কাজ</th></tr></thead><tbody>${rec.map(l => { 
       const w = AppState.workers.find(i => i.id === l.worker_id); 
       const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
-      const siteBadge = isWork ? `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${l.site_name}</span>` : `<span class="badge-pill no-work"><i class="fa-solid fa-hand-holding-dollar"></i> কাজ নেই (শুধু জমা)</span>`;
+      const safeSiteName = escapeHTML(l.site_name || "বিল্ডিং");
+      const safeWorkerName = escapeHTML(l.worker_name || "কর্মী");
+      const siteBadge = isWork ? `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${safeSiteName}</span>` : `<span class="badge-pill no-work"><i class="fa-solid fa-hand-holding-dollar"></i> কাজ নেই (শুধু জমা)</span>`;
       return `<tr class="log-card-row ${isWork ? '' : 'row-payment-only'}">
-        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar"></i> ${l.date || '-'}</span></td>
-        <td data-label="শ্রমিক" class="td-cell td-worker"><div class="worker-row-info">${AppState.getAvatar(w, 'worker-avatar-sm')} <div><strong class="worker-name">${l.worker_name || 'কর্মী'}</strong> <div class="worker-sub-role">${AppState.getRoleBadge(l.role)}</div></div></div></td>
+        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar"></i> ${escapeHTML(l.date || '-')}</span></td>
+        <td data-label="শ্রমিক" class="td-cell td-worker"><div class="worker-row-info">${AppState.getAvatar(w, 'worker-avatar-sm')} <div><strong class="worker-name">${safeWorkerName}</strong> <div class="worker-sub-role">${AppState.getRoleBadge(l.role)}</div></div></div></td>
         <td data-label="বিল্ডিং / স্ট্যাটাস" class="td-cell td-site">${siteBadge}</td>
         <td data-label="মজুরি" class="td-cell td-wage"><span class="money-green">${+l.wage_amount ? AppState.money(l.wage_amount) : '-'}</span></td>
         <td data-label="জমা" class="td-cell td-advance"><span class="money-amber">${+l.advance_paid ? AppState.money(l.advance_paid) : '-'}</span></td>
-        <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? l.work_sqft + ' sqft' : (l.remarks || (isWork ? '-' : 'জমা / পেমেন্ট'))}</span></td>
+        <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? escapeHTML(l.work_sqft) + ' sqft' : escapeHTML(l.remarks || (isWork ? '-' : 'জমা / পেমেন্ট'))}</span></td>
       </tr>`; 
     }).join('')}</tbody></table></div>` : '<div class="empty-state"><p><i class="fa-solid fa-clipboard-list" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;"></i><br>কোনো সাম্প্রতিক এন্ট্রি পাওয়া যায়নি।</p></div>';
   },
@@ -102,6 +106,7 @@ const Render = {
       const dayAdvance = dayLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0);
       const daySqft = dayLogs.reduce((acc, l) => acc + (+l.work_sqft || 0), 0);
       const dayBalance = dayWages - dayAdvance;
+      const safeDate = escapeHTML(date);
 
       let contentHtml = '';
 
@@ -115,6 +120,10 @@ const Render = {
               const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
               const wage = +l.wage_amount || 0;
               const advance = +l.advance_paid || 0;
+              const safeSiteName = escapeHTML(l.site_name || "বিল্ডিং");
+              const safeWorkerName = escapeHTML(l.worker_name || "কর্মী");
+              const safeLogId = escapeHTML(l.id || "");
+              const safeRemarks = escapeHTML(l.remarks || "");
 
               let cardTypeClass = "card-work-and-payment";
               let siteBadge = "";
@@ -128,12 +137,12 @@ const Render = {
               } else if (wage > 0 && advance === 0) {
                 // 2. শুধু কাজ করেছে কিন্তু বিল নেয়নি (Work Done - No Advance)
                 cardTypeClass = "card-work-only";
-                siteBadge = `<span class="badge-pill work-day" title="${l.site_name}"><i class="fa-solid fa-city"></i> ${l.site_name}</span><span class="badge-pill unpaid-work"><i class="fa-solid fa-circle-check"></i> পাওনা</span>`;
+                siteBadge = `<span class="badge-pill work-day" title="${safeSiteName}"><i class="fa-solid fa-city"></i> ${safeSiteName}</span><span class="badge-pill unpaid-work"><i class="fa-solid fa-circle-check"></i> পাওনা</span>`;
                 statusStrip = `<div class="card-status-strip strip-work"><i class="fa-solid fa-briefcase"></i> <span><strong>কাজের দিন:</strong> কোনো টাকা জমা নেওয়া হয়নি</span></div>`;
               } else {
                 // 3. স্বাভাবিক (কাজ ও জমা দুটোই আছে)
                 cardTypeClass = "card-work-and-payment";
-                siteBadge = `<span class="badge-pill work-day" title="${l.site_name}"><i class="fa-solid fa-city"></i> ${l.site_name}</span>`;
+                siteBadge = `<span class="badge-pill work-day" title="${safeSiteName}"><i class="fa-solid fa-city"></i> ${safeSiteName}</span>`;
               }
 
               const dueDisplay = cumDue > 0 ? `<span class="money-rose font-bold">${AppState.money(cumDue)}</span>` : (cumDue < 0 ? `<span class="money-amber font-bold">${AppState.money(Math.abs(cumDue))} (জমা বেশি)</span>` : `<span style="color:#64748b;font-weight:600">৳০</span>`);
@@ -144,7 +153,7 @@ const Render = {
                     <div class="worker-row-info">
                       ${AppState.getAvatar(w, 'worker-avatar-sm')}
                       <div>
-                        <strong class="worker-name">${l.worker_name || 'কর্মী'}</strong>
+                        <strong class="worker-name">${safeWorkerName}</strong>
                         <div class="worker-sub-role">${AppState.getRoleBadge(l.role)}</div>
                       </div>
                     </div>
@@ -168,20 +177,20 @@ const Render = {
                     </div>
                     <div class="metric-cell">
                       <span class="metric-label">কাজ (SqFt)</span>
-                      <span class="metric-val">${l.work_sqft ? l.work_sqft + ' sqft' : '-'}</span>
+                      <span class="metric-val">${l.work_sqft ? escapeHTML(l.work_sqft) + ' sqft' : '-'}</span>
                     </div>
                   </div>
 
-                  ${l.remarks ? `
+                  ${safeRemarks ? `
                     <div class="card-note-box">
                       <i class="fa-regular fa-note-sticky"></i>
-                      <span>${l.remarks}</span>
+                      <span>${safeRemarks}</span>
                     </div>
                   ` : ''}
 
                   <div class="card-footer-actions admin-only">
-                    <button class="btn btn-secondary btn-icon btn-sm edit-log-btn" data-id="${l.id}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-outline-danger btn-icon btn-sm delete-log-btn" data-id="${l.id}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-secondary btn-icon btn-sm edit-log-btn" data-id="${safeLogId}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-outline-danger btn-icon btn-sm delete-log-btn" data-id="${safeLogId}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
               `;
@@ -213,6 +222,10 @@ const Render = {
                   const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
                   const wage = +l.wage_amount || 0;
                   const advance = +l.advance_paid || 0;
+                  const safeSiteName = escapeHTML(l.site_name || "বিল্ডিং");
+                  const safeWorkerName = escapeHTML(l.worker_name || "কর্মী");
+                  const safeLogId = escapeHTML(l.id || "");
+                  const safeRemarks = escapeHTML(l.remarks || "");
 
                   let rowTypeClass = "row-work-and-payment";
                   let siteBadge = "";
@@ -222,28 +235,28 @@ const Render = {
                     siteBadge = `<span class="badge-pill no-work"><i class="fa-solid fa-hand-holding-dollar"></i> শুধু জমা</span>`;
                   } else if (wage > 0 && advance === 0) {
                     rowTypeClass = "row-work-only";
-                    siteBadge = `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${l.site_name}</span> <span class="badge-pill unpaid-work"><i class="fa-solid fa-circle-check"></i> পাওনা</span>`;
+                    siteBadge = `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${safeSiteName}</span> <span class="badge-pill unpaid-work"><i class="fa-solid fa-circle-check"></i> পাওনা</span>`;
                   } else {
                     rowTypeClass = "row-work-and-payment";
-                    siteBadge = `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${l.site_name}</span>`;
+                    siteBadge = `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${safeSiteName}</span>`;
                   }
 
                   const dueDisplay = cumDue > 0 ? `<span class="money-rose font-bold">${AppState.money(cumDue)}</span>` : (cumDue < 0 ? `<span class="money-amber font-bold">${AppState.money(Math.abs(cumDue))} (জমা বেশি)</span>` : `<span style="color:#64748b;font-weight:600">৳০</span>`);
 
                   return `
                     <tr class="log-card-row ${rowTypeClass}">
-                      <td data-label="শ্রমিক" class="td-cell td-worker"><div class="worker-row-info">${AppState.getAvatar(w, 'worker-avatar-sm')} <div><strong class="worker-name">${l.worker_name || 'কর্মী'}</strong></div></div></td>
+                      <td data-label="শ্রমিক" class="td-cell td-worker"><div class="worker-row-info">${AppState.getAvatar(w, 'worker-avatar-sm')} <div><strong class="worker-name">${safeWorkerName}</strong></div></div></td>
                       <td data-label="বিল্ডিং / অবস্থা" class="td-cell td-site">${siteBadge}</td>
                       <td data-label="পদবি" class="td-cell td-role">${AppState.getRoleBadge(l.role)}</td>
                       <td data-label="মজুরি" class="td-cell td-wage"><span class="money-green">${+l.wage_amount ? AppState.money(l.wage_amount) : '-'}</span></td>
                       <td data-label="জমা" class="td-cell td-advance"><span class="money-amber">${+l.advance_paid ? AppState.money(l.advance_paid) : '-'}</span></td>
                       <td data-label="মোট বকেয়া" class="td-cell td-due">${dueDisplay}</td>
-                      <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? l.work_sqft + ' sqft' : '-'}</span></td>
-                      <td data-label="নোট" class="td-cell td-note"><span class="note-text">${l.remarks || (isWork ? '-' : 'কাজ ছাড়া শুধু জমা')}</span></td>
+                      <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? escapeHTML(l.work_sqft) + ' sqft' : '-'}</span></td>
+                      <td data-label="নোট" class="td-cell td-note"><span class="note-text">${safeRemarks || (isWork ? '-' : 'কাজ ছাড়া শুধু জমা')}</span></td>
                       <td data-label="অ্যাকশন" class="td-cell td-actions admin-only" style="text-align:right">
                         <div class="card-action-btns">
-                          <button class="btn btn-secondary btn-icon btn-sm edit-log-btn" data-id="${l.id}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
-                          <button class="btn btn-outline-danger btn-icon btn-sm delete-log-btn" data-id="${l.id}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
+                          <button class="btn btn-secondary btn-icon btn-sm edit-log-btn" data-id="${safeLogId}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
+                          <button class="btn btn-outline-danger btn-icon btn-sm delete-log-btn" data-id="${safeLogId}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
                         </div>
                       </td>
                     </tr>
@@ -256,12 +269,12 @@ const Render = {
       }
 
       return `
-        <div class="date-group-card ${isExpanded ? 'is-expanded' : 'is-collapsed'}" data-date="${date}">
+        <div class="date-group-card ${isExpanded ? 'is-expanded' : 'is-collapsed'}" data-date="${safeDate}">
           <!-- Accordion Header Bar -->
-          <div class="date-group-header" data-date="${date}" title="ক্লিক করে এই তারিখ খুলুন বা বন্ধ করুন">
+          <div class="date-group-header" data-date="${safeDate}" title="ক্লিক করে এই তারিখ খুলুন বা বন্ধ করুন">
             <div class="date-header-left">
               <i class="fa-solid fa-chevron-down accordion-arrow ${isExpanded ? 'open' : ''}"></i>
-              <span class="date-badge-main"><i class="fa-regular fa-calendar-days"></i> ${date}</span>
+              <span class="date-badge-main"><i class="fa-regular fa-calendar-days"></i> ${safeDate}</span>
               <span class="badge-pill viewer count-pill">${dayLogs.length} জন কর্মী</span>
             </div>
 
@@ -302,7 +315,11 @@ const Render = {
     el.innerHTML = AppState.sites.length ? AppState.sites.map(s => {
       const sLogs = AppState.logs.filter(l => l.site_id === s.id), sExp = AppState.expenses.filter(e => e.site_id === s.id);
       const labor = sLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), mat = sExp.reduce((acc, e) => acc + (+e.amount || 0), 0), sqft = sLogs.reduce((acc, l) => acc + (+l.work_sqft || 0), 0);
-      return `<div class="entity-card"><div><div class="entity-card-header"><div><h4 class="entity-title">${s.name}</h4><div class="entity-subtitle"><i class="fa-solid fa-location-dot"></i> ${s.location || 'ঠিকানা নেই'}</div></div><span class="badge-pill admin">${s.status === 'completed' ? 'সম্পন্ন' : 'চলমান'}</span></div><div class="entity-stats"><div class="stat-item"><span>মোট খরচ</span><span class="money-green">${AppState.money(labor + mat)}</span></div><div class="stat-item"><span>মজুরি খরচ</span><span>${AppState.money(labor)}</span></div><div class="stat-item"><span>মালামাল খরচ</span><span>${AppState.money(mat)}</span></div><div class="stat-item"><span>টাইলস কাজ</span><span>${sqft} SqFt</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-secondary btn-sm view-site-btn" data-id="${s.id}"><i class="fa-solid fa-eye"></i> বিস্তারিত দেখুন</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-site-btn" data-id="${s.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-site-btn" data-id="${s.id}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
+      const safeSiteId = escapeHTML(s.id);
+      const safeSiteName = escapeHTML(s.name);
+      const safeSiteLoc = escapeHTML(s.location || "ঠিকানা নেই");
+      
+      return `<div class="entity-card"><div><div class="entity-card-header"><div><h4 class="entity-title">${safeSiteName}</h4><div class="entity-subtitle"><i class="fa-solid fa-location-dot"></i> ${safeSiteLoc}</div></div><span class="badge-pill admin">${s.status === 'completed' ? 'সম্পন্ন' : 'চলমান'}</span></div><div class="entity-stats"><div class="stat-item"><span>মোট খরচ</span><span class="money-green">${AppState.money(labor + mat)}</span></div><div class="stat-item"><span>মজুরি খরচ</span><span>${AppState.money(labor)}</span></div><div class="stat-item"><span>মালামাল খরচ</span><span>${AppState.money(mat)}</span></div><div class="stat-item"><span>টাইলস কাজ</span><span>${sqft} SqFt</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-secondary btn-sm view-site-btn" data-id="${safeSiteId}"><i class="fa-solid fa-eye"></i> বিস্তারিত দেখুন</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-site-btn" data-id="${safeSiteId}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-site-btn" data-id="${safeSiteId}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
     }).join('') : '<div class="empty-state"><p><i class="fa-solid fa-city" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;"></i><br>কোনো বিল্ডিং যোগ করা হয়নি।</p></div>';
   },
 
@@ -315,7 +332,12 @@ const Render = {
       const earned = wLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), adv = wLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0);
       const actualWorkDays = wLogs.filter(l => (Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") && (+l.wage_amount > 0 || +l.work_sqft > 0)) || +l.wage_amount > 0).length;
       const paymentOnlyDays = wLogs.filter(l => (!l.site_id || !l.site_name || l.site_name === "কোনো সাইট নেই (শুধু পেমেন্ট)" || +l.wage_amount === 0) && +l.advance_paid > 0).length;
-      return `<div class="entity-card"><div><div class="entity-card-header"><div class="worker-row-info">${AppState.getAvatar(w)}<div><h4 class="entity-title">${w.name}</h4><div class="entity-subtitle"><i class="fa-solid fa-phone"></i> ${w.phone || '-'} | <i class="fa-solid fa-location-dot"></i> ${w.location || 'ঠিকানা নেই'}</div></div></div>${AppState.getRoleBadge(w.role)}</div><div class="entity-stats"><div class="stat-item"><span>মোট আয়</span><span class="money-green">${AppState.money(earned)}</span></div><div class="stat-item"><span>মোট জমা</span><span class="money-amber">${AppState.money(adv)}</span></div><div class="stat-item"><span>অবশিষ্ট পাওনা</span><span class="${earned - adv > 0 ? 'money-rose' : 'money-green'}">${AppState.money(earned - adv)}</span></div><div class="stat-item"><span>কাজের দিন</span><span style="font-weight:700;">${actualWorkDays} দিন ${paymentOnlyDays > 0 ? `<small style="display:block;font-size:0.7rem;color:#d97706;font-weight:600;">(+${paymentOnlyDays} দিন শুধু জমা)</small>` : ''}</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-primary btn-sm view-worker-profile-btn" data-id="${w.id}"><i class="fa-solid fa-user"></i> প্রোফাইল ভিউ</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-worker-btn" data-id="${w.id}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-worker-btn" data-id="${w.id}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
+      const safeWorkerId = escapeHTML(w.id);
+      const safeWorkerName = escapeHTML(w.name);
+      const safeWorkerPhone = escapeHTML(w.phone || "-");
+      const safeWorkerLoc = escapeHTML(w.location || "ঠিকানা নেই");
+
+      return `<div class="entity-card"><div><div class="entity-card-header"><div class="worker-row-info">${AppState.getAvatar(w)}<div><h4 class="entity-title">${safeWorkerName}</h4><div class="entity-subtitle"><i class="fa-solid fa-phone"></i> ${safeWorkerPhone} | <i class="fa-solid fa-location-dot"></i> ${safeWorkerLoc}</div></div></div>${AppState.getRoleBadge(w.role)}</div><div class="entity-stats"><div class="stat-item"><span>মোট আয়</span><span class="money-green">${AppState.money(earned)}</span></div><div class="stat-item"><span>মোট জমা</span><span class="money-amber">${AppState.money(adv)}</span></div><div class="stat-item"><span>অবশিষ্ট পাওনা</span><span class="${earned - adv > 0 ? 'money-rose' : 'money-green'}">${AppState.money(earned - adv)}</span></div><div class="stat-item"><span>কাজের দিন</span><span style="font-weight:700;">${actualWorkDays} দিন ${paymentOnlyDays > 0 ? `<small style="display:block;font-size:0.7rem;color:#d97706;font-weight:600;">(+${paymentOnlyDays} দিন শুধু জমা)</small>` : ''}</span></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:0.75rem"><button class="btn btn-primary btn-sm view-worker-profile-btn" data-id="${safeWorkerId}"><i class="fa-solid fa-user"></i> প্রোফাইল ভিউ</button><div class="admin-only" style="display:flex;gap:0.35rem"><button class="btn btn-secondary btn-icon btn-sm edit-worker-btn" data-id="${safeWorkerId}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-outline-danger btn-icon btn-sm delete-worker-btn" data-id="${safeWorkerId}"><i class="fa-solid fa-trash"></i></button></div></div></div>`;
     }).join('') : '<div class="empty-state"><p><i class="fa-solid fa-users" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;"></i><br>কোনো শ্রমিক যোগ করা হয়নি।</p></div>';
   },
 
@@ -350,15 +372,16 @@ const Render = {
     document.getElementById("prof-history-table").innerHTML = wLogs.length ? wLogs.map(l => {
       const cumDue = balanceMap.has(l.id) ? balanceMap.get(l.id) : ((+l.wage_amount || 0) - (+l.advance_paid || 0));
       const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
-      const siteBadge = isWork ? `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${l.site_name}</span>` : `<span class="badge-pill no-work"><i class="fa-solid fa-hand-holding-dollar"></i> কাজ নেই (শুধু জমা)</span>`;
+      const safeSiteName = escapeHTML(l.site_name || "বিল্ডিং");
+      const siteBadge = isWork ? `<span class="badge-pill work-day"><i class="fa-solid fa-city"></i> ${safeSiteName}</span>` : `<span class="badge-pill no-work"><i class="fa-solid fa-hand-holding-dollar"></i> কাজ নেই (শুধু জমা)</span>`;
       const dueDisplay = cumDue > 0 ? `<span class="money-rose font-bold">${AppState.money(cumDue)}</span>` : (cumDue < 0 ? `<span class="money-amber font-bold">${AppState.money(Math.abs(cumDue))} (অতিরিক্ত জমা)</span>` : `<span style="color:#64748b">৳০</span>`);
       return `<tr class="log-card-row ${isWork ? '' : 'row-payment-only'}">
-        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${l.date || '-'}</span></td>
+        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${escapeHTML(l.date || '-')}</span></td>
         <td data-label="বিল্ডিং / অবস্থা" class="td-cell td-site">${siteBadge}</td>
         <td data-label="মজুরি" class="td-cell td-wage"><span class="money-green">${+l.wage_amount ? AppState.money(l.wage_amount) : '-'}</span></td>
         <td data-label="জমা" class="td-cell td-advance"><span class="money-amber">${+l.advance_paid ? AppState.money(l.advance_paid) : '-'}</span></td>
         <td data-label="মোট বকেয়া" class="td-cell td-due">${dueDisplay}</td>
-        <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? l.work_sqft + ' sqft' : (l.remarks || (isWork ? '-' : 'কাজ ছাড়া শুধু জমা'))}</span></td>
+        <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? escapeHTML(l.work_sqft) + ' sqft' : escapeHTML(l.remarks || (isWork ? '-' : 'কাজ ছাড়া শুধু জমা'))}</span></td>
       </tr>`;
     }).join('') : '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-muted);">কোনো ইতিহাস নেই।</td></tr>';
   },
@@ -367,20 +390,26 @@ const Render = {
     const list = AppState.filterExpenses(), el = document.getElementById("expenses-container");
     document.getElementById("expenses-count").textContent = list.length + " টি খরচ";
     if (!list.length) return el.innerHTML = '<div class="empty-state"><p><i class="fa-solid fa-receipt" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.4;"></i><br>কোনো খরচ পাওয়া যায়নি।</p></div>';
-    el.innerHTML = `<div class="table-responsive"><table class="custom-table table-expenses"><thead><tr><th>তারিখ</th><th>বিল্ডিং</th><th>খাত</th><th>পরিমাণ</th><th>বিবরণ</th><th class="admin-only" style="text-align:right">অ্যাকশন</th></tr></thead><tbody>${list.map(e => `
+    el.innerHTML = `<div class="table-responsive"><table class="custom-table table-expenses"><thead><tr><th>তারিখ</th><th>বিল্ডিং</th><th>খাত</th><th>পরিমাণ</th><th>বিবরণ</th><th class="admin-only" style="text-align:right">অ্যাকশন</th></tr></thead><tbody>${list.map(e => {
+      const safeExpId = escapeHTML(e.id);
+      const safeSiteName = escapeHTML(e.site_name || "সাধারণ সাইট");
+      const safeCat = escapeHTML(e.category || "অন্যান্য");
+      const safeNote = escapeHTML(e.note || "-");
+      return `
       <tr class="log-card-row">
-        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${e.date || '-'}</span></td>
-        <td data-label="বিল্ডিং" class="td-cell td-site"><span class="badge-pill viewer"><i class="fa-solid fa-city"></i> ${e.site_name || 'সাধারণ সাইট'}</span></td>
-        <td data-label="খাত" class="td-cell td-role"><span class="tag-badge tag-cutter">${e.category}</span></td>
+        <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${escapeHTML(e.date || '-')}</span></td>
+        <td data-label="বিল্ডিং" class="td-cell td-site"><span class="badge-pill viewer"><i class="fa-solid fa-city"></i> ${safeSiteName}</span></td>
+        <td data-label="খাত" class="td-cell td-role"><span class="tag-badge tag-cutter">${safeCat}</span></td>
         <td data-label="পরিমাণ" class="td-cell td-wage"><span class="money-rose font-bold">${AppState.money(e.amount)}</span></td>
-        <td data-label="বিবরণ" class="td-cell td-note"><span class="note-text" style="color:#64748b">${e.note || '-'}</span></td>
+        <td data-label="বিবরণ" class="td-cell td-note"><span class="note-text" style="color:#64748b">${safeNote}</span></td>
         <td data-label="অ্যাকশন" class="td-cell td-actions admin-only" style="text-align:right">
           <div class="card-action-btns">
-            <button class="btn btn-secondary btn-icon btn-sm edit-expense-btn" data-id="${e.id}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
-            <button class="btn btn-outline-danger btn-icon btn-sm delete-expense-btn" data-id="${e.id}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
+            <button class="btn btn-secondary btn-icon btn-sm edit-expense-btn" data-id="${safeExpId}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-outline-danger btn-icon btn-sm delete-expense-btn" data-id="${safeExpId}" title="মুছুন"><i class="fa-solid fa-trash"></i></button>
           </div>
         </td>
-      </tr>`).join('')}</tbody></table></div>`;
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
   },
 
   reports() {
@@ -434,21 +463,31 @@ const Render = {
             ${list.length ? list.map(l => {
               const cumDue = balanceMap.has(l.id) ? balanceMap.get(l.id) : ((+l.wage_amount || 0) - (+l.advance_paid || 0));
               const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
+              const safeSiteName = escapeHTML(l.site_name || "বিল্ডিং");
+              const safeWorkerName = escapeHTML(l.worker_name || "কর্মী");
+              const safeRemarks = escapeHTML(l.remarks || "-");
               const dueDisplay = cumDue > 0 ? `<span class="money-rose font-bold">${AppState.money(cumDue)}</span>` : (cumDue < 0 ? `<span class="money-amber font-bold">${AppState.money(Math.abs(cumDue))} (অতিরিক্ত জমা)</span>` : `<span style="color:#64748b">৳০</span>`);
               return `<tr class="log-card-row ${isWork ? '' : 'row-payment-only'}">
-                <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${l.date || '-'}</span></td>
-                <td data-label="বিল্ডিং / অবস্থা" class="td-cell td-site"><span class="badge-pill ${isWork ? 'work-day' : 'no-work'}">${isWork ? l.site_name : 'কাজ নেই'}</span></td>
-                <td data-label="শ্রমিক" class="td-cell td-worker"><strong class="worker-name">${l.worker_name || 'কর্মী'}</strong></td>
+                <td data-label="তারিখ" class="td-cell td-date"><span class="card-date-badge"><i class="fa-regular fa-calendar-days"></i> ${escapeHTML(l.date || '-')}</span></td>
+                <td data-label="বিল্ডিং / অবস্থা" class="td-cell td-site"><span class="badge-pill ${isWork ? 'work-day' : 'no-work'}">${isWork ? safeSiteName : 'কাজ নেই'}</span></td>
+                <td data-label="শ্রমিক" class="td-cell td-worker"><strong class="worker-name">${safeWorkerName}</strong></td>
                 <td data-label="পদবি" class="td-cell td-role">${AppState.getRoleBadge(l.role)}</td>
                 <td data-label="মজুরি" class="td-cell td-wage"><span class="money-green">${+l.wage_amount ? AppState.money(l.wage_amount) : '-'}</span></td>
                 <td data-label="জমা" class="td-cell td-advance"><span class="money-amber">${+l.advance_paid ? AppState.money(l.advance_paid) : '-'}</span></td>
                 <td data-label="মোট বকেয়া" class="td-cell td-due">${dueDisplay}</td>
-                <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? l.work_sqft + ' sqft' : '-'}</span></td>
-                <td data-label="মন্তব্য" class="td-cell td-note"><span class="note-text">${l.remarks || '-'}</span></td>
+                <td data-label="কাজ" class="td-cell td-work"><span class="work-sqft-val">${l.work_sqft ? escapeHTML(l.work_sqft) + ' sqft' : '-'}</span></td>
+                <td data-label="মন্তব্য" class="td-cell td-note"><span class="note-text">${safeRemarks}</span></td>
               </tr>`;
             }).join('') : '<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--text-muted)">কোনো রেকর্ড পাওয়া যায়নি</td></tr>'}
           </tbody>
         </table>
+      </div>
+      
+      <!-- Printable Signature & Date Section for Vouchers -->
+      <div class="print-signatures" style="display:none;margin-top:3rem;padding-top:2rem;justify-content:space-between;">
+        <div style="text-align:center;border-top:1px solid #000;width:180px;padding-top:0.5rem;font-size:12px;">কারিগর / শ্রমিকের স্বাক্ষর</div>
+        <div style="text-align:center;border-top:1px solid #000;width:180px;padding-top:0.5rem;font-size:12px;">হিসাবরক্ষক / সাইট ইনচার্জ</div>
+        <div style="text-align:center;border-top:1px solid #000;width:180px;padding-top:0.5rem;font-size:12px;">মালিক / অথরাইজড স্বাক্ষর</div>
       </div>
     `;
   },
@@ -482,3 +521,4 @@ const Render = {
   }
 };
 window.Render = Render;
+

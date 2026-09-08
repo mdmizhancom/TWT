@@ -5,9 +5,9 @@ const Actions = {
     if (!c) return;
     const t = document.createElement("div");
     t.className = `toast toast-${type}`;
-    t.innerHTML = `<span>${msg}</span>`;
+    t.innerHTML = `<span>${escapeHTML(msg)}</span>`;
     c.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
   },
 
   openModal(id) { const el = document.getElementById(id); if (el) el.classList.add("active"); },
@@ -18,7 +18,7 @@ const Actions = {
     if (isLoading) {
       btn.disabled = true;
       btn.dataset.origHtml = btn.innerHTML;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${loadingText}</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${escapeHTML(loadingText)}</span>`;
       btn.classList.add("btn-loading");
     } else {
       btn.disabled = false;
@@ -43,6 +43,8 @@ const Actions = {
 
     try {
       let savedCount = 0;
+      let isFirstRow = true;
+
       for (const row of rows) {
         const rSite = row.querySelector(".row-site-select"), wSel = row.querySelector(".row-worker-select");
         const sId = (rSite && rSite.value) ? rSite.value : "";
@@ -58,8 +60,13 @@ const Actions = {
         if (!wId && !wage && !adv && !sqft) continue;
 
         const data = { date, site_id: sId, site_name: sName, worker_id: wId, worker_name: wName, role, wage_amount: wage, advance_paid: adv, work_sqft: sqft, remarks };
-        if (id && rows.length === 1) await DB.update("work_logs", id, data); 
-        else await DB.add("work_logs", data);
+        
+        if (id && isFirstRow) {
+          await DB.update("work_logs", id, data);
+          isFirstRow = false;
+        } else {
+          await DB.add("work_logs", data);
+        }
         savedCount++;
       }
 
@@ -121,7 +128,7 @@ const Actions = {
     const id = document.getElementById("expense-id").value, sSel = document.getElementById("expense-site-select");
     const date = document.getElementById("expense-date").value || new Date().toISOString().split("T")[0];
     const cat = document.getElementById("expense-category").value || "অন্যান্য বিবিধ খরচ", amt = +document.getElementById("expense-amount").value || 0, note = document.getElementById("expense-note").value.trim();
-    const sId = sSel.value || "", sName = sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || "সাধারণ সাইট";
+    const sId = sSel.value || "", sName = (sId && sSel.selectedIndex >= 0) ? (sSel.options[sSel.selectedIndex]?.getAttribute("data-name") || "সাধারণ সাইট") : "সাধারণ সাইট";
     if (!amt && !note && !sId) return Actions.toast("কমপক্ষে খরচের পরিমাণ বা বিবরণ দিন!", "warning");
 
     Actions.setBtnLoading(btn, true, id ? "হালনাগাদ হচ্ছে..." : "সংরক্ষণ হচ্ছে...");
@@ -137,7 +144,7 @@ const Actions = {
     }
   },
 
-  saveFirebaseConfig(e) {
+  async saveFirebaseConfig(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     Actions.setBtnLoading(btn, true, "আপডেট হচ্ছে...");
@@ -147,7 +154,7 @@ const Actions = {
         projectId: document.getElementById("cfg-project-id").value.trim(), storageBucket: document.getElementById("cfg-storage-bucket").value.trim(),
         messagingSenderId: document.getElementById("cfg-sender-id").value.trim(), appId: document.getElementById("cfg-app-id").value.trim()
       };
-      DB.saveConfig(cfg); 
+      await DB.saveConfig(cfg); 
       Actions.closeModal("modal-settings");
       Actions.toast("ফায়ারবেস কনফিগারেশন আপডেট সম্পন্ন হয়েছে!", "success");
     } catch (err) {
@@ -179,13 +186,101 @@ const Actions = {
     const logs = AppState.filterLogs();
     if (!logs.length) return Actions.toast("এক্সপোর্ট করার কোনো ডাটা নেই", "warning");
     const balanceMap = AppState.getRunningBalances();
-    let csv = "data:text/csv;charset=utf-8,\uFEFFতারিখ,বিল্ডিং / অবস্থা,শ্রমিক,রোল,মজুরি,জমা,মোট বকেয়া,কাজ (SqFt),নোট\n";
+    
+    const escapeCsv = (str) => {
+      const s = String(str || '').replace(/"/g, '""');
+      return `"${s}"`;
+    };
+
+    let totalWage = 0, totalAdv = 0, totalSqft = 0;
+    let csv = "\uFEFFতারিখ,বিল্ডিং / অবস্থা,শ্রমিক,রোল,মজুরি (টাকা),জমা (টাকা),মোট বকেয়া (টাকা),কাজ (SqFt),নোট\n";
+    
     logs.forEach(l => { 
       const sName = l.site_name || 'কাজ নেই (শুধু পেমেন্ট)';
       const cumDue = balanceMap.has(l.id) ? balanceMap.get(l.id) : ((+l.wage_amount || 0) - (+l.advance_paid || 0));
-      csv += `"${l.date}","${sName}","${l.worker_name}","${l.role}",${l.wage_amount},${l.advance_paid},${cumDue},${l.work_sqft || 0},"${l.remarks || ''}"\n`; 
+      const wage = +l.wage_amount || 0;
+      const adv = +l.advance_paid || 0;
+      const sqft = +l.work_sqft || 0;
+      totalWage += wage;
+      totalAdv += adv;
+      totalSqft += sqft;
+
+      csv += `${escapeCsv(l.date)},${escapeCsv(sName)},${escapeCsv(l.worker_name)},${escapeCsv(l.role)},${wage},${adv},${cumDue},${sqft},${escapeCsv(l.remarks)}\n`; 
     });
-    const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `Tiles_Report_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+
+    // Summary line in CSV
+    csv += `\n"সর্বমোট","--","--","--",${totalWage},${totalAdv},${totalWage - totalAdv},${totalSqft},""\n`;
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Tiles_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    Actions.toast("CSV রিপোর্ট ডাউনলোড সম্পন্ন হয়েছে!");
+  },
+
+  exportBackup() {
+    try {
+      const backupData = {
+        version: "2.0",
+        exported_at: new Date().toISOString(),
+        sites: AppState.sites,
+        workers: AppState.workers,
+        work_logs: AppState.logs,
+        expenses: AppState.expenses
+      };
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Tiles_Works_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      Actions.toast("সম্পূর্ণ ডাটা ব্যাকআপ ডাউনলোড হয়েছে!");
+    } catch (err) {
+      Actions.toast("ব্যাকআপ তৈরিতে ত্রুটি হয়েছে!", "error");
+    }
+  },
+
+  async importBackup(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!data || (!data.work_logs && !data.sites && !data.workers && !data.expenses)) {
+          return Actions.toast("অবৈধ ব্যাকআপ ফাইল!", "error");
+        }
+        if (!confirm("আপনি কি নিশ্চিত এই ব্যাকআপ ফাইলটি রিস্টোর করতে চান? বর্তমান ডাটার সাথে নতুন ডাটা সিঙ্ক হবে।")) {
+          e.target.value = "";
+          return;
+        }
+
+        if (Array.isArray(data.sites)) DB.save("sites", data.sites);
+        if (Array.isArray(data.workers)) DB.save("workers", data.workers);
+        if (Array.isArray(data.work_logs)) DB.save("work_logs", data.work_logs);
+        if (Array.isArray(data.expenses)) DB.save("expenses", data.expenses);
+
+        Actions.toast("ডাটা সফলভাবে রিস্টোর হয়েছে!", "success");
+        Actions.closeModal("modal-settings");
+        if (window.Render) window.Render.all();
+      } catch (err) {
+        console.error(err);
+        Actions.toast("ফাইল পড়তে সমস্যা হয়েছে! সঠিক JSON ফাইল দিন।", "error");
+      } finally {
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file);
   }
 };
 window.Actions = Actions;
