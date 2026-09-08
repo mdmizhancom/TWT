@@ -25,6 +25,7 @@ const savedConfig = localStorage.getItem("twt_firebase_config");
 initFirebase(savedConfig ? JSON.parse(savedConfig) : DEFAULT_CONFIG);
 
 const DB = {
+  _listeners: {},
   getConfig() {
     const c = localStorage.getItem("twt_firebase_config");
     return c ? JSON.parse(c) : DEFAULT_CONFIG;
@@ -39,15 +40,22 @@ const DB = {
   },
   save(k, list) {
     try { localStorage.setItem("twt_" + k, JSON.stringify(list)); } catch (e) {}
+    if (this._listeners[k]) {
+      this._listeners[k].forEach(cb => {
+        try { cb(list); } catch (err) { console.error("Listener error:", err); }
+      });
+    }
   },
   listen(col, cb) {
+    if (!this._listeners[col]) this._listeners[col] = [];
+    this._listeners[col].push(cb);
     cb(this.get(col));
     if (db) {
       try {
         db.collection(col).onSnapshot(snap => {
           const list = [];
           snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-          this.save(col, list);
+          try { localStorage.setItem("twt_" + col, JSON.stringify(list)); } catch (e) {}
           cb(list);
         }, err => console.warn(col + " listen:", err));
       } catch (err) {}

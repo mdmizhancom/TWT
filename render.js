@@ -37,7 +37,14 @@ const Render = {
     document.getElementById("stat-total-sites").textContent = AppState.sites.length;
     document.getElementById("stat-total-workers").textContent = AppState.workers.length;
     
-    const rec = [...AppState.logs].sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 6);
+    const rec = [...AppState.logs].sort((a, b) => {
+      const tA = AppState.parseDateToTime(a.date);
+      const tB = AppState.parseDateToTime(b.date);
+      if (tA !== tB) return tB - tA;
+      const crA = a.created_at ? Date.parse(a.created_at) || 0 : 0;
+      const crB = b.created_at ? Date.parse(b.created_at) || 0 : 0;
+      return crB - crA;
+    }).slice(0, 6);
     document.getElementById("dashboard-recent-logs").innerHTML = rec.length ? `<div class="table-responsive"><table class="custom-table table-worklogs"><thead><tr><th>তারিখ</th><th>শ্রমিক</th><th>বিল্ডিং / স্ট্যাটাস</th><th>মজুরি</th><th>জমা</th><th>কাজ</th></tr></thead><tbody>${rec.map(l => { 
       const w = AppState.workers.find(i => i.id === l.worker_id); 
       const isWork = Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)");
@@ -77,7 +84,9 @@ const Render = {
       if (!groups[d]) groups[d] = [];
       groups[d].push(l);
     });
-    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    const sortedDates = Object.keys(groups).sort((a, b) => {
+      return AppState.parseDateToTime(b) - AppState.parseDateToTime(a);
+    });
 
     // If no date is currently selected/expanded, auto-expand only the latest date
     if (!AppState.expandedDate && sortedDates.length > 0) {
@@ -301,7 +310,8 @@ const Render = {
     const el = document.getElementById("workers-grid-container");
     document.getElementById("workers-count").textContent = AppState.workers.length + " জন কর্মী";
     el.innerHTML = AppState.workers.length ? AppState.workers.map(w => {
-      const wLogs = AppState.logs.filter(l => l.worker_id === w.id);
+      const targetKey = AppState.getWorkerCanonicalKey(w.id, w.name);
+      const wLogs = AppState.logs.filter(l => AppState.getWorkerCanonicalKey(l.worker_id, l.worker_name) === targetKey);
       const earned = wLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), adv = wLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0);
       const actualWorkDays = wLogs.filter(l => (Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") && (+l.wage_amount > 0 || +l.work_sqft > 0)) || +l.wage_amount > 0).length;
       const paymentOnlyDays = wLogs.filter(l => (!l.site_id || !l.site_name || l.site_name === "কোনো সাইট নেই (শুধু পেমেন্ট)" || +l.wage_amount === 0) && +l.advance_paid > 0).length;
@@ -312,7 +322,15 @@ const Render = {
   workerProfile(w) {
     if (!w) return;
     const balanceMap = AppState.getRunningBalances();
-    const wLogs = AppState.logs.filter(l => l.worker_id === w.id);
+    const targetKey = AppState.getWorkerCanonicalKey(w.id, w.name);
+    const wLogs = AppState.logs.filter(l => AppState.getWorkerCanonicalKey(l.worker_id, l.worker_name) === targetKey).sort((a, b) => {
+      const tA = AppState.parseDateToTime(a.date);
+      const tB = AppState.parseDateToTime(b.date);
+      if (tA !== tB) return tB - tA; // latest date first
+      const crA = a.created_at ? Date.parse(a.created_at) || 0 : 0;
+      const crB = b.created_at ? Date.parse(b.created_at) || 0 : 0;
+      return crB - crA;
+    });
     const earned = wLogs.reduce((acc, l) => acc + (+l.wage_amount || 0), 0), adv = wLogs.reduce((acc, l) => acc + (+l.advance_paid || 0), 0), sqft = wLogs.reduce((acc, l) => acc + (+l.work_sqft || 0), 0);
     const actualWorkDays = wLogs.filter(l => (Boolean(l.site_id && l.site_name && l.site_name !== "কোনো সাইট নেই (শুধু পেমেন্ট)") && (+l.wage_amount > 0 || +l.work_sqft > 0)) || +l.wage_amount > 0).length;
     const paymentOnlyDays = wLogs.filter(l => (!l.site_id || !l.site_name || l.site_name === "কোনো সাইট নেই (শুধু পেমেন্ট)" || +l.wage_amount === 0) && +l.advance_paid > 0).length;

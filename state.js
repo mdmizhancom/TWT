@@ -53,46 +53,120 @@ const AppState = {
     return `<span class="tag-badge tag-mistri"><i class="fa-solid fa-trowel"></i> ${r}</span>`;
   },
 
+  parseDateToTime(dStr) {
+    if (!dStr) return 0;
+    if (typeof dStr === "number") return dStr;
+    if (dStr instanceof Date) return dStr.getTime();
+    const s = String(dStr).trim();
+    // YYYY-MM-DD or YYYY/MM/DD
+    const isoMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (isoMatch) {
+      return new Date(+isoMatch[1], +isoMatch[2] - 1, +isoMatch[3]).getTime();
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    const dmyMatch = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+    if (dmyMatch) {
+      return new Date(+dmyMatch[3], +dmyMatch[2] - 1, +dmyMatch[1]).getTime();
+    }
+    const parsed = Date.parse(s);
+    return isNaN(parsed) ? 0 : parsed;
+  },
+
+  getWorkerCanonicalKey(workerId, workerName) {
+    const wId = String(workerId || "").trim();
+    const wName = String(workerName || "").trim().toLowerCase();
+    
+    // 1. If worker_id exists and matches a known worker in AppState
+    if (wId && this.workers && this.workers.length) {
+      const found = this.workers.find(w => String(w.id) === wId);
+      if (found) return "w_" + found.id;
+    }
+    // 2. If worker_name matches a known worker by name
+    if (wName && this.workers && this.workers.length) {
+      const found = this.workers.find(w => (w.name || "").trim().toLowerCase() === wName);
+      if (found) return "w_" + found.id;
+    }
+    // 3. Fallback to worker_id or worker_name
+    if (wId) return "w_" + wId;
+    if (wName) return "name_" + wName;
+    return "unknown_worker";
+  },
+
   filterLogs() {
     const { siteId, workerId, role, startDate, endDate, q } = this.filters;
+    const startT = startDate ? this.parseDateToTime(startDate) : null;
+    const endT = endDate ? this.parseDateToTime(endDate) : null;
+
     return this.logs.filter(l => {
       if (siteId !== "all" && l.site_id !== siteId) return false;
-      if (workerId !== "all" && l.worker_id !== workerId) return false;
+      if (workerId !== "all") {
+        const lKey = this.getWorkerCanonicalKey(l.worker_id, l.worker_name);
+        const targetWorker = this.workers.find(w => w.id === workerId);
+        const targetKey = targetWorker ? this.getWorkerCanonicalKey(targetWorker.id, targetWorker.name) : ("w_" + workerId);
+        if (lKey !== targetKey) return false;
+      }
       if (role !== "all" && l.role !== role) return false;
-      if (startDate && l.date < startDate) return false;
-      if (endDate && l.date > endDate) return false;
+      
+      const logT = this.parseDateToTime(l.date);
+      if (startT && logT < startT) return false;
+      if (endT && logT > endT) return false;
+
       if (q) {
-        const text = `${l.worker_name} ${l.site_name} ${l.remarks || ""}`.toLowerCase();
+        const text = `${l.worker_name || ""} ${l.site_name || ""} ${l.remarks || ""}`.toLowerCase();
         if (!text.includes(q.toLowerCase())) return false;
       }
       return true;
-    }).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    }).sort((a, b) => {
+      const tA = this.parseDateToTime(a.date);
+      const tB = this.parseDateToTime(b.date);
+      if (tA !== tB) return tB - tA; // Newest date first for log lists
+      const crA = a.created_at ? Date.parse(a.created_at) || 0 : 0;
+      const crB = b.created_at ? Date.parse(b.created_at) || 0 : 0;
+      return crB - crA;
+    });
   },
 
   filterExpenses() {
     const { siteId, startDate, endDate, q } = this.filters;
+    const startT = startDate ? this.parseDateToTime(startDate) : null;
+    const endT = endDate ? this.parseDateToTime(endDate) : null;
+
     return this.expenses.filter(e => {
       if (siteId !== "all" && e.site_id !== siteId) return false;
-      if (startDate && e.date < startDate) return false;
-      if (endDate && e.date > endDate) return false;
+      const expT = this.parseDateToTime(e.date);
+      if (startT && expT < startT) return false;
+      if (endT && expT > endT) return false;
       if (q) {
-        const text = `${e.site_name} ${e.category} ${e.note || ""}`.toLowerCase();
+        const text = `${e.site_name || ""} ${e.category || ""} ${e.note || ""}`.toLowerCase();
         if (!text.includes(q.toLowerCase())) return false;
       }
       return true;
-    }).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    }).sort((a, b) => {
+      const tA = this.parseDateToTime(a.date);
+      const tB = this.parseDateToTime(b.date);
+      if (tA !== tB) return tB - tA;
+      return (b.created_at || "").localeCompare(a.created_at || "");
+    });
   },
 
   getRunningBalances() {
+    // Sort all logs strictly in ascending chronological order (oldest date first -> newest date last)
     const sorted = [...this.logs].sort((a, b) => {
-      const dComp = (a.date || "").localeCompare(b.date || "");
-      if (dComp !== 0) return dComp;
-      return (a.created_at || "").localeCompare(b.created_at || "");
+      const timeA = this.parseDateToTime(a.date);
+      const timeB = this.parseDateToTime(b.date);
+      if (timeA !== timeB) return timeA - timeB; // Oldest date first
+
+      const crA = a.created_at ? Date.parse(a.created_at) || 0 : 0;
+      const crB = b.created_at ? Date.parse(b.created_at) || 0 : 0;
+      if (crA !== crB) return crA - crB;
+
+      return String(a.id || "").localeCompare(String(b.id || ""));
     });
+
     const running = {};
     const map = new Map();
     sorted.forEach(l => {
-      const wKey = l.worker_id || l.worker_name || "worker";
+      const wKey = this.getWorkerCanonicalKey(l.worker_id, l.worker_name);
       if (running[wKey] === undefined) running[wKey] = 0;
       const net = (+l.wage_amount || 0) - (+l.advance_paid || 0);
       running[wKey] += net;
