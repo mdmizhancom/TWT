@@ -29,6 +29,7 @@ const Actions = {
 
   async saveLog(e) {
     e.preventDefault();
+    if (!AppState.isAdmin) return Actions.toast("লক করা অবস্থায় তথ্য সংরক্ষণ করা সম্ভব নয়!", "warning");
     const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById("log-id").value;
     const date = document.getElementById("log-date").value || new Date().toISOString().split("T")[0];
@@ -82,6 +83,7 @@ const Actions = {
 
   async saveSite(e) {
     e.preventDefault();
+    if (!AppState.isAdmin) return Actions.toast("লক করা অবস্থায় তথ্য সংরক্ষণ করা সম্ভব নয়!", "warning");
     const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById("site-id").value;
     const name = document.getElementById("site-name").value.trim(), loc = document.getElementById("site-location").value.trim(), status = document.getElementById("site-status").value || "active";
@@ -102,6 +104,7 @@ const Actions = {
 
   async saveWorker(e) {
     e.preventDefault();
+    if (!AppState.isAdmin) return Actions.toast("লক করা অবস্থায় তথ্য সংরক্ষণ করা সম্ভব নয়!", "warning");
     const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById("worker-id").value;
     const name = document.getElementById("worker-name").value.trim(), role = document.getElementById("worker-role").value || "মেস্তুরি";
@@ -124,6 +127,7 @@ const Actions = {
 
   async saveExpense(e) {
     e.preventDefault();
+    if (!AppState.isAdmin) return Actions.toast("লক করা অবস্থায় তথ্য সংরক্ষণ করা সম্ভব নয়!", "warning");
     const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById("expense-id").value, sSel = document.getElementById("expense-site-select");
     const date = document.getElementById("expense-date").value || new Date().toISOString().split("T")[0];

@@ -761,7 +761,13 @@ tr.row-payment-only:hover { background-color: rgba(254, 243, 199, 0.55) !importa
 .toast-warning { background-color: #d97706; }
 
 .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); width: 100%; }
-body:not(.is-admin) .admin-only { display: none !important; }
+body:not(.is-admin) .admin-only,
+body:not(.is-admin) .custom-table .admin-only,
+body:not(.is-admin) .custom-table th.admin-only,
+body:not(.is-admin) .custom-table td.admin-only,
+body:not(.is-admin) .custom-table td.td-actions.admin-only {
+  display: none !important;
+}
 body.is-admin .viewer-only { display: none !important; }
 
 /* Worker Avatar Extra Small & Dynamic Row Preview in Modals */

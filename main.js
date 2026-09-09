@@ -264,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (profW) { const w = AppState.workers.find(i => i.id === profW.dataset.id); Render.workerProfile(w); Actions.openModal("modal-worker-profile"); }
     if (editL) { 
+      if (!AppState.isAdmin) { Actions.toast("এটি সম্পাদনা করার জন্য অ্যাডমিন আনলক করুন!", "warning"); return; }
       const l = AppState.logs.find(i => i.id === editL.dataset.id); 
       if (l) { 
         Render.dropdowns(); 
@@ -277,13 +278,34 @@ document.addEventListener("DOMContentLoaded", () => {
         Actions.openModal("modal-work-log"); 
       } 
     }
-    if (delL && confirm("আপনি কি নিশ্চিত এই হাজিরার এন্ট্রি মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("হাজিরা এন্ট্রি মুছে ফেলা হয়েছে", "info"); }
-    if (editS) { const s = AppState.sites.find(i => i.id === editS.dataset.id); if (s) { document.getElementById("site-id").value = s.id; document.getElementById("site-name").value = s.name; document.getElementById("site-location").value = s.location || ""; document.getElementById("site-status").value = s.status || "active"; Actions.openModal("modal-site"); } }
-    if (delS && confirm("বিল্ডিংটি মুছে ফেলতে চান? (এর সাথে যুক্ত আগের রেকর্ড অক্ষুণ্ন থাকবে)")) { await DB.remove("sites", delS.dataset.id); Actions.toast("বিল্ডিং মুছে ফেলা হয়েছে", "info"); }
-    if (editW) { const w = AppState.workers.find(i => i.id === editW.dataset.id); if (w) { document.getElementById("worker-id").value = w.id; document.getElementById("worker-name").value = w.name; document.getElementById("worker-role").value = w.role; document.getElementById("worker-phone").value = w.phone || ""; document.getElementById("worker-rate").value = w.daily_rate || 0; document.getElementById("worker-location").value = w.location || ""; document.getElementById("worker-avatar-url").value = w.avatar_url || ""; Actions.openModal("modal-worker"); } }
-    if (delW && confirm("শ্রমিক প্রোফাইলটি মুছে ফেলতে চান?")) { await DB.remove("workers", delW.dataset.id); Actions.toast("শ্রমিক মুছে ফেলা হয়েছে", "info"); }
-    if (editE) { const exp = AppState.expenses.find(i => i.id === editE.dataset.id); if (exp) { Render.dropdowns(); document.getElementById("expense-id").value = exp.id; document.getElementById("expense-date").value = exp.date; document.getElementById("expense-site-select").value = exp.site_id; document.getElementById("expense-category").value = exp.category; document.getElementById("expense-amount").value = exp.amount; document.getElementById("expense-note").value = exp.note || ""; Actions.openModal("modal-expense"); } }
-    if (delE && confirm("খরচের রেকর্ডটি মুছে ফেলতে চান?")) { await DB.remove("expenses", delE.dataset.id); Actions.toast("খরচ মুছে ফেলা হয়েছে", "info"); }
+    if (delL) {
+      if (!AppState.isAdmin) { Actions.toast("এটি মুছে ফেলার জন্য অ্যাডমিন আনলক করুন!", "warning"); return; }
+      if (confirm("আপনি কি নিশ্চিত এই হাজিরার এন্ট্রি মুছে ফেলতে চান?")) { await DB.remove("work_logs", delL.dataset.id); Actions.toast("হাজিরা এন্ট্রি মুছে ফেলা হয়েছে", "info"); }
+    }
+    if (editS) { 
+      if (!AppState.isAdmin) { Actions.toast("বিল্ডিং তথ্য সম্পাদনা করতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      const s = AppState.sites.find(i => i.id === editS.dataset.id); if (s) { document.getElementById("site-id").value = s.id; document.getElementById("site-name").value = s.name; document.getElementById("site-location").value = s.location || ""; document.getElementById("site-status").value = s.status || "active"; Actions.openModal("modal-site"); } 
+    }
+    if (delS) {
+      if (!AppState.isAdmin) { Actions.toast("বিল্ডিং মুছতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      if (confirm("বিল্ডিংটি মুছে ফেলতে চান? (এর সাথে যুক্ত আগের রেকর্ড অক্ষুণ্ন থাকবে)")) { await DB.remove("sites", delS.dataset.id); Actions.toast("বিল্ডিং মুছে ফেলা হয়েছে", "info"); }
+    }
+    if (editW) { 
+      if (!AppState.isAdmin) { Actions.toast("শ্রমিক তথ্য সম্পাদনা করতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      const w = AppState.workers.find(i => i.id === editW.dataset.id); if (w) { document.getElementById("worker-id").value = w.id; document.getElementById("worker-name").value = w.name; document.getElementById("worker-role").value = w.role; document.getElementById("worker-phone").value = w.phone || ""; document.getElementById("worker-rate").value = w.daily_rate || 0; document.getElementById("worker-location").value = w.location || ""; document.getElementById("worker-avatar-url").value = w.avatar_url || ""; Actions.openModal("modal-worker"); } 
+    }
+    if (delW) {
+      if (!AppState.isAdmin) { Actions.toast("শ্রমিক মুছতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      if (confirm("শ্রমিক প্রোফাইলটি মুছে ফেলতে চান?")) { await DB.remove("workers", delW.dataset.id); Actions.toast("শ্রমিক মুছে ফেলা হয়েছে", "info"); }
+    }
+    if (editE) { 
+      if (!AppState.isAdmin) { Actions.toast("খরচ সম্পাদনা করতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      const exp = AppState.expenses.find(i => i.id === editE.dataset.id); if (exp) { Render.dropdowns(); document.getElementById("expense-id").value = exp.id; document.getElementById("expense-date").value = exp.date; document.getElementById("expense-site-select").value = exp.site_id; document.getElementById("expense-category").value = exp.category; document.getElementById("expense-amount").value = exp.amount; document.getElementById("expense-note").value = exp.note || ""; Actions.openModal("modal-expense"); } 
+    }
+    if (delE) {
+      if (!AppState.isAdmin) { Actions.toast("খরচের রেকর্ড মুছতে অ্যাডমিন আনলক করুন!", "warning"); return; }
+      if (confirm("খরচের রেকর্ডটি মুছে ফেলতে চান?")) { await DB.remove("expenses", delE.dataset.id); Actions.toast("খরচ মুছে ফেলা হয়েছে", "info"); }
+    }
     if (e.target.closest(".view-site-btn")) { document.getElementById("filter-site").value = e.target.closest(".view-site-btn").dataset.id; onFilter(); switchTab("logs"); }
   });
   document.getElementById("btn-export-csv")?.addEventListener("click", Actions.exportCSV);

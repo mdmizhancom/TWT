@@ -522,6 +522,15 @@ html, body {
     border-bottom: none !important;
   }
 
+  /* Strict Lock/Viewer Protection on Mobile */
+  body:not(.is-admin) .admin-only,
+  body:not(.is-admin) .custom-table .admin-only,
+  body:not(.is-admin) .custom-table th.admin-only,
+  body:not(.is-admin) .custom-table td.admin-only,
+  body:not(.is-admin) .custom-table td.td-actions.admin-only {
+    display: none !important;
+  }
+
   .custom-table td.td-actions::before {
     display: none !important;
   }
@@ -768,3 +777,13 @@ html, body {
 .print-header {
   display: none;
 }
+
+/* Universal Lock & Admin-Only Enforcement */
+body:not(.is-admin) .admin-only,
+body:not(.is-admin) .custom-table .admin-only,
+body:not(.is-admin) .custom-table th.admin-only,
+body:not(.is-admin) .custom-table td.admin-only,
+body:not(.is-admin) .custom-table td.td-actions.admin-only {
+  display: none !important;
+}
+
